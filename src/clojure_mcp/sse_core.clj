@@ -1,21 +1,14 @@
 (ns clojure-mcp.sse-core
   (:require
-   [clojure-mcp.main :as main]
-   [clojure-mcp.core :as core]
-   [clojure-mcp.config :as config]
    [clojure.tools.logging :as log])
   (:import
-   [io.modelcontextprotocol.server.transport
-    HttpServletSseServerTransportProvider]
-   [org.eclipse.jetty.server Server]
-   [org.eclipse.jetty.servlet ServletContextHandler ServletHolder]
-   [jakarta.servlet.http HttpServlet HttpServletRequest HttpServletResponse]
-   [io.modelcontextprotocol.server McpServer McpServerFeatures
-    McpServerFeatures$AsyncToolSpecification
-    McpServerFeatures$AsyncResourceSpecification]
-   [io.modelcontextprotocol.spec
-    McpSchema$ServerCapabilities]
-   [com.fasterxml.jackson.databind ObjectMapper]))
+   (com.fasterxml.jackson.databind ObjectMapper)
+   (io.modelcontextprotocol.server McpServer)
+   (io.modelcontextprotocol.server.transport
+    HttpServletSseServerTransportProvider)
+   (io.modelcontextprotocol.spec McpSchema$ServerCapabilities)
+   (org.eclipse.jetty.ee10.servlet ServletContextHandler ServletHolder)
+   (org.eclipse.jetty.server Server)))
 
 ;; helpers for setting up an sse mcp server
 
