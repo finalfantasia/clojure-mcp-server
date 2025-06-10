@@ -8,6 +8,7 @@
 .lsp
 .hg/
 .hgignore
+.idea/
 .java-version
 .lein-*
 .lsp/.cache
@@ -24,6 +25,7 @@
 .sw*
 .vscode
 *.class
+*.iml
 *.jar
 *.swp
 *~
