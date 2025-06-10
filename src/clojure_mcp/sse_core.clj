@@ -10,8 +10,8 @@
     HttpServletSseServerTransportProvider)
    (io.modelcontextprotocol.spec McpSchema$ServerCapabilities)
    (jakarta.servlet Servlet)
-   (org.eclipse.jetty.server Server)
-   (org.eclipse.jetty.servlet ServletContextHandler ServletHolder)))
+   (org.eclipse.jetty.ee10.servlet ServletContextHandler ServletHolder)
+   (org.eclipse.jetty.server Server)))
 
 ;; helpers for setting up an sse mcp server
 
