@@ -124,7 +124,10 @@
                  slipset/deps-deploy {:mvn/version "0.2.2"}}
           :ns-default build}
   :neil {:project {:name clojure-mcp/clojure-mcp}}
-  :lint {:deps {clj-kondo/clj-kondo {:mvn/version "2025.02.20"}}
-         :main-opts ["-m" "clj-kondo.main" "--lint" "src"]}}}
-
-
+  :lint {:deps {clj-kondo/clj-kondo {:mvn/version "2025.06.05"}}
+         :main-opts ["-m" "clj-kondo.main" "--lint" "src"]}
+  :antq
+  {:replace-deps
+   {com.github.liquidz/antq {:mvn/version "2.11.1276"}
+    org.slf4j/slf4j-simple {:mvn/version "2.0.17"}}
+   :main-opts ["--main" "antq.core"]}}}
