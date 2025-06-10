@@ -9,14 +9,14 @@
         pogonos/pogonos {:mvn/version "0.2.1"}
 
         ;; Clojure source manipulation
-        rewrite-clj/rewrite-clj {:mvn/version "1.1.47"}
+        rewrite-clj/rewrite-clj {:mvn/version "1.2.50"}
         dev.weavejester/cljfmt {:mvn/version "0.13.1"}
-        clj-kondo/clj-kondo {:mvn/version "2024.03.13"}
+        clj-kondo/clj-kondo {:mvn/version "2025.07.28"}
         org.clojars.oakes/parinfer {:mvn/version "0.4.0"}
 
-       ;; LLM ecosystem Java libs
-        org.apache.tika/tika-core {:mvn/version "3.2.0"}
-        io.modelcontextprotocol.sdk/mcp {:mvn/version "0.10.0"}
+        ;; LLM ecosystem Java libs
+        org.apache.tika/tika-core {:mvn/version "3.2.1"}
+        io.modelcontextprotocol.sdk/mcp {:mvn/version "0.11.0"}
 
         dev.langchain4j/langchain4j {:mvn/version "1.2.0"}
         dev.langchain4j/langchain4j-open-ai {:mvn/version "1.2.0"}
@@ -27,38 +27,38 @@
         ;; org.slf4j/slf4j-nop {:mvn/version "2.0.17"}
 
         ;; native Java diff library
-        io.github.java-diff-utils/java-diff-utils {:mvn/version "4.15"}}
+        io.github.java-diff-utils/java-diff-utils {:mvn/version "4.16"}}
 
  :aliases
  {:mcp
-  {:extra-deps {org.slf4j/slf4j-nop {:mvn/version "2.0.16"}}
+  {:extra-deps {org.slf4j/slf4j-nop {:mvn/version "2.0.17"}}
    :exec-fn clojure-mcp.main/start-mcp-server
    ;; it needs an nREPL port to talk to
    :exec-args {:port 7888}}
 
   :mcp-sse
-  {:extra-deps {org.slf4j/slf4j-simple {:mvn/version "2.0.16"} ;; optional
+  {:extra-deps {org.slf4j/slf4j-simple {:mvn/version "2.0.17"} ;; optional
                 jakarta.servlet/jakarta.servlet-api {:mvn/version "6.1.0"}
-                org.eclipse.jetty/jetty-server {:mvn/version "11.0.20"}
-                org.eclipse.jetty/jetty-servlet {:mvn/version "11.0.20"}}
+                org.eclipse.jetty/jetty-server {:mvn/version "12.0.23"}
+                org.eclipse.jetty.ee10/jetty-ee10-servlet {:mvn/version "12.0.23"}}
    :exec-fn clojure-mcp.sse-main/start-sse-mcp-server
    :exec-args {:port 7888 ; the nREPL port to connect to
                ;; specify the :mcp-sse-port to listen on
                :mcp-sse-port 8078}}
 
   :mcp-figwheel
-  {:extra-deps {org.slf4j/slf4j-nop {:mvn/version "2.0.16"}}
+  {:extra-deps {org.slf4j/slf4j-nop {:mvn/version "2.0.17"}}
    :exec-fn clojure-mcp.main-examples.figwheel-main/start-mcp-server
    :exec-args {:port 7888 :figwheel-build "dev"}}
 
   :mcp-shadow
-  {:extra-deps {org.slf4j/slf4j-nop {:mvn/version "2.0.16"}}
+  {:extra-deps {org.slf4j/slf4j-nop {:mvn/version "2.0.17"}}
    :exec-fn clojure-mcp.main-examples.shadow-main/start-mcp-server
    :exec-args {:port 7888 :shadow-build "app"}}
 
   ;; dual shadow-cljs and project nREPL setup
   :mcp-shadow-dual
-  {:extra-deps {org.slf4j/slf4j-nop {:mvn/version "2.0.16"}}
+  {:extra-deps {org.slf4j/slf4j-nop {:mvn/version "2.0.17"}}
    :extra-paths ["dev" "test"]
    :exec-fn clojure-mcp.main-examples.shadow-main/start-mcp-server
    ;; it needs an nREPL port to talk to
@@ -66,7 +66,7 @@
 
   ;; below are dev setups that need a logback.xml file
   :dev-mcp
-  {:extra-deps {ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}
+  {:extra-deps {ch.qos.logback/logback-classic {:mvn/version "1.5.18"}}
    :extra-paths ["dev" "test"]
    :exec-fn clojure-mcp.main/start-mcp-server
    ;; it needs an nREPL port to talk to
@@ -74,7 +74,7 @@
 
   ;; DEV setup needs logback.xml
   :dev-mcp-figwheel
-  {:extra-deps {ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}
+  {:extra-deps {ch.qos.logback/logback-classic {:mvn/version "1.5.18"}}
    :extra-paths ["dev" "test"]
    :exec-fn clojure-mcp.main-examples.figwheel-main/start-mcp-server
    ;; it needs an nrepl port to talk to
@@ -82,14 +82,14 @@
 
   ;; DEV setup needs logback.xml
   :dev-mcp-shadow
-  {:extra-deps {ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}
+  {:extra-deps {ch.qos.logback/logback-classic {:mvn/version "1.5.18"}}
    :extra-paths ["dev" "test"]
    :exec-fn clojure-mcp.main-examples.shadow-main/start-mcp-server
    ;; it needs an nrepl port to talk to
    :exec-args {:port 7888 :shadow-build "app"}}
 
   :dev-mcp-shadow-dual
-  {:extra-deps {ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}
+  {:extra-deps {ch.qos.logback/logback-classic {:mvn/version "1.5.18"}}
    :extra-paths ["dev" "test"]
    :exec-fn clojure-mcp.main-examples.shadow-main/start-mcp-server
    ;; it needs an nrepl port to talk to
@@ -127,15 +127,15 @@
   :index
   {:exec-fn clojure-mcp.code-indexer/map-project
    :exec-args {}
-   :extra-deps {org.slf4j/slf4j-nop {:mvn/version "2.0.16"}}}
+   :extra-deps {org.slf4j/slf4j-nop {:mvn/version "2.0.17"}}}
    ;; override with: clojure -X:index :dirs '["src" "lib"]' :include-tests true :out-file '"my-index.txt"'
 
   :build {:deps {io.github.clojure/tools.build
-                 {:git/tag "v0.9.2" :git/sha "fe6b140"}
-                 slipset/deps-deploy {:mvn/version "0.2.0"}}
+                 {:git/tag "v0.10.10" :git/sha "deedd62"}
+                 slipset/deps-deploy {:mvn/version "0.2.2"}}
           :ns-default build}
   :neil {:project {:name clojure-mcp/clojure-mcp}}
-  :lint {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2025.06.05"}}
+  :lint {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2025.07.28"}}
          :main-opts ["--main" "clj-kondo.main"
                      "--parallel"
                      "--lint" "deps.edn" "src" "test"]}
@@ -148,7 +148,6 @@
                "--remove-trailing-whitespace"
                "--sort-ns-references"
                "check" "deps.edn" "src" "test"]}
-
   :format/fix
   {:replace-deps
    {dev.weavejester/cljfmt {:mvn/version "0.13.1"}}
@@ -157,4 +156,9 @@
                "--remove-multiple-non-indenting-spaces"
                "--remove-trailing-whitespace"
                "--sort-ns-references"
-               "fix" "deps.edn" "src" "test"]}}}
+               "fix" "deps.edn" "src" "test"]}
+  :antq
+  {:replace-deps
+   {com.github.liquidz/antq {:mvn/version "2.11.1276"}
+    org.slf4j/slf4j-simple {:mvn/version "2.0.17"}}
+   :main-opts ["--main" "antq.core"]}}}
