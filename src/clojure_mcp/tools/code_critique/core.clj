@@ -2,8 +2,8 @@
   "Core implementation for the code critique tool.
    This namespace contains the pure functionality without any MCP-specific code."
   (:require
-   [clojure.string :as string]
    [clojure-mcp.agent.langchain :as chain]
+   [clojure.string :as string]
    [clojure.tools.logging :as log])
   (:import
    [clojure_mcp.agent.langchain AiService]))

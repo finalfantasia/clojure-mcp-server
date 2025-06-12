@@ -1,11 +1,10 @@
 (ns clojure-mcp.tools.grep.tool
   "Implementation of the grep tool using the tool-system multimethod approach."
   (:require
+   [clojure-mcp.config :as config]
    [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.tools.grep.core :as core]
    [clojure-mcp.utils.valid-paths :as valid-paths]
-   [clojure-mcp.config :as config] ; Added config require
-   [clojure.data.json :as json]
    [clojure.string :as string]))
 
 ;; Factory function to create the tool configuration

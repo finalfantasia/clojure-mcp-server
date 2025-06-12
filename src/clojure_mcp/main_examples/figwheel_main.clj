@@ -1,7 +1,7 @@
 (ns clojure-mcp.main-examples.figwheel-main
-  (:require 
-   [clojure-mcp.core :as core]
+  (:require
    [clojure-mcp.config :as config]
+   [clojure-mcp.core :as core]
    [clojure-mcp.main :as main]
    [clojure-mcp.tools.figwheel.tool :as figwheel-tool]))
 

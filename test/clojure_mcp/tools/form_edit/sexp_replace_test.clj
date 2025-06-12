@@ -1,14 +1,13 @@
 (ns clojure-mcp.tools.form-edit.sexp-replace-test
   (:require
-   [clojure.test :refer [deftest testing is use-fixtures]]
-   [clojure-mcp.tools.form-edit.tool :as sut]
-   [clojure-mcp.tools.form-edit.pipeline :as pipeline]
-   [clojure-mcp.tools.form-edit.core :as core]
-   [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.config :as config] ; Added config require
+   [clojure-mcp.tool-system :as tool-system]
+   [clojure-mcp.tools.form-edit.pipeline :as pipeline]
+   [clojure-mcp.tools.form-edit.tool :as sut]
    [clojure-mcp.tools.read-file.file-timestamps :as file-timestamps]
    [clojure.java.io :as io]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing use-fixtures]]))
 
 ;; Test fixtures
 (def ^:dynamic *test-dir* nil)
@@ -67,8 +66,9 @@
 (defn get-file-path []
   (.getCanonicalPath *test-file*))
 
-(defn register-file-timestamp []
+(defn register-file-timestamp
   "Updates the timestamp for the test file to mark it as read."
+  []
   (let [file-path (get-file-path)]
     (file-timestamps/update-file-timestamp-to-current-mtime! *client-atom* file-path)
     ;; Small delay to ensure timestamps differ if modified
@@ -107,7 +107,7 @@
 (deftest sexp-replace-tool-test
   (let [client-atom *client-atom*
         sexp-tool (sut/create-edit-replace-sexp-tool client-atom)]
-    
+
     (testing "Basic S-Expression replacement"
       (let [file-path (get-file-path)
             _ (register-file-timestamp) ;; Register file before editing
@@ -169,7 +169,7 @@
             result (tool-system/execute-tool sexp-tool validated)
             formatted (tool-system/format-results sexp-tool result)
             file-content (slurp file-path)]
-       
+
         ;; Skip detailed diff pattern validation since format has changed
         (is (map? formatted) "Response should be a map")
         (is (contains? formatted :result) "Response should contain :result key")

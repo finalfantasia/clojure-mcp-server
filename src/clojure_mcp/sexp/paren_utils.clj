@@ -1,10 +1,10 @@
 (ns clojure-mcp.sexp.paren-utils
   (:require
    [clojure-mcp.linting :as linting]
-   [rewrite-clj.parser :as parser]
+   [clojure.string :as string]
    [rewrite-clj.node :as node]
-   [clojure.string :as string])
-  (:import [com.oakmac.parinfer Parinfer]))
+   [rewrite-clj.parser :as parser])
+  (:import (com.oakmac.parinfer Parinfer)))
 
 ;; Tokenizer that breaks code into expressions and delimiter tokens
 (defn tokenize-code
@@ -43,7 +43,7 @@
   {:pre [(= :delimiter type) (open-delim value)]}
   (update x :value delim-map))
 
-(defn open-delim? [{:keys [type value] :as x}]
+(defn open-delim? [{:keys [type value] :as _x}]
   (when (= :delimiter type)
     (open-delim value)))
 
@@ -108,13 +108,13 @@
     (boolean (some #(re-find % report) delimiter-error-patterns))
     false))
 
-(defn code-has-delimiter-errors?
-  "Returns true if the given Clojure code string has delimiter errors
+#_(defn code-has-delimiter-errors?
+    "Returns true if the given Clojure code string has delimiter errors
    (unbalanced parentheses, brackets, braces, or string quotes).
    Returns false otherwise."
-  [code-str]
-  (let [lint-result (linting/lint-delims code-str)]
-    (has-delimiter-errors? lint-result)))
+    [code-str]
+    (let [lint-result (linting/lint-delims code-str)]
+      (has-delimiter-errors? lint-result)))
 
 #_(defn smart-repair [code-str]
     (if-let [parinfer-result (parinfer-repair code-str)]
@@ -151,8 +151,8 @@
   ;; Test with complex case - both extra and missing parens
   (def code3 "(defn hello [name]
   (str \"Hello\" name))) 
-(defn world [] 
-  (println \"World\")")
+  (defn world []
+    (println \"World\")")
   (tokenize-code code3)
   (fix-parens (tokenize-code code3))
   (repair-parens code3)

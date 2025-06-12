@@ -1,12 +1,11 @@
 (ns clojure-mcp.other-tools.namespace.tool-test
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures]]
-   [clojure-mcp.other-tools.namespace.tool :as sut]
-   [clojure-mcp.other-tools.namespace.core :as core]
-   [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.nrepl :as nrepl]
-   [nrepl.server :as nrepl-server]
-   [clojure.string :as str]))
+   [clojure-mcp.other-tools.namespace.tool :as sut]
+   [clojure-mcp.tool-system :as tool-system]
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing use-fixtures]]
+   [nrepl.server]))
 
 ;; Use the common test utils for nREPL server setup
 (defonce ^:dynamic *nrepl-server* nil)
@@ -46,15 +45,15 @@
     @promise-result))
 
 ;; Helper to test just the individual steps of the pipeline
-(defn test-pipeline-steps [tool-type inputs]
-  (let [tool-instance (case tool-type
-                        :current-namespace (sut/create-current-namespace-tool *nrepl-client-atom*)
-                        :list-namespaces (sut/create-list-namespaces-tool *nrepl-client-atom*)
-                        :list-vars-in-namespace (sut/create-list-vars-tool *nrepl-client-atom*))
-        validated (tool-system/validate-inputs tool-instance inputs)
-        execution-result (tool-system/execute-tool tool-instance validated)
-        formatted-result (tool-system/format-results tool-instance execution-result)]
-    formatted-result))
+#_(defn test-pipeline-steps [tool-type inputs]
+    (let [tool-instance (case tool-type
+                          :current-namespace (sut/create-current-namespace-tool *nrepl-client-atom*)
+                          :list-namespaces (sut/create-list-namespaces-tool *nrepl-client-atom*)
+                          :list-vars-in-namespace (sut/create-list-vars-tool *nrepl-client-atom*))
+          validated (tool-system/validate-inputs tool-instance inputs)
+          execution-result (tool-system/execute-tool tool-instance validated)
+          formatted-result (tool-system/format-results tool-instance execution-result)]
+      formatted-result))
 
 (deftest tool-name-test
   (testing "Tool names are correct"
@@ -70,7 +69,7 @@
     (doseq [tool-type [:current-namespace :list-namespaces :list-vars-in-namespace]]
       (let [description (tool-system/tool-description {:tool-type tool-type})]
         (is (string? description))
-        (is (not (empty? description)))))))
+        (is (not (str/blank? description)))))))
 
 (deftest tool-schema-test
   (testing "current-namespace schema is correct"
@@ -161,7 +160,7 @@
           error-result {:error true :message "Namespace not found"}
           success-formatted (tool-system/format-results {:tool-type :list-vars-in-namespace} success-result)
           error-formatted (tool-system/format-results {:tool-type :list-vars-in-namespace} error-result)
-          expected-format (str "join\n  ([coll] [separator coll])\n  Joins strings")]
+          expected-format "join\n  ([coll] [separator coll])\n  Joins strings"]
       (is (= {:result [expected-format] :error false} success-formatted))
       (is (= {:result ["Namespace not found"] :error true} error-formatted)))))
 
@@ -203,7 +202,7 @@
 
 (deftest registration-map-test
   (testing "backward compatibility functions return valid registration maps"
-    (doseq [[fn-name tool-fn]
+    (doseq [[_fn-name tool-fn]
             [["current-namespace" sut/current-namespace-tool]
              ["list-namespaces" sut/list-namespaces-tool]
              ["list-vars-in-namespace" sut/list-vars-in-namespace-tool]]]

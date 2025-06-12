@@ -1,10 +1,9 @@
 (ns clojure-mcp.sse-main
   (:require
-   [clojure-mcp.main :as main]
-   [clojure-mcp.sse-core :as sse-core]
-   [clojure-mcp.core :as core]
    [clojure-mcp.config :as config]
-   [clojure.tools.logging :as log]))
+   [clojure-mcp.core :as core]
+   [clojure-mcp.main :as main]
+   [clojure-mcp.sse-core :as sse-core]))
 
 (def nrepl-client-atom (atom nil))
 
@@ -18,7 +17,7 @@
         _ (reset! nrepl-client-atom nrepl-client-map)
         tools (main/my-tools nrepl-client-atom)
         prompts (main/my-prompts working-dir)
-        {:keys [mcp-server provider-servlet] } (sse-core/mcp-sse-server)]
+        {:keys [mcp-server provider-servlet]} (sse-core/mcp-sse-server)]
     (doseq [tool tools]
       (core/add-tool mcp-server tool))
     (doseq [resource resources]

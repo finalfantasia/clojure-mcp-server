@@ -3,19 +3,19 @@
    Provides a thread-first pattern with error short-circuiting and
    standardized context maps."
   (:require
-   [clojure-mcp.tools.form-edit.core :as core]
-   [clojure-mcp.utils.emacs-integration :as emacs]
-   [clojure-mcp.utils.diff :as diff-utils]
-   [clojure-mcp.tools.read-file.file-timestamps :as file-timestamps]
    [clojure-mcp.config :as config]
-   [rewrite-clj.zip :as z]
-   [rewrite-clj.parser :as p]
    [clojure-mcp.linting :as linting]
    [clojure-mcp.sexp.paren-utils :as paren-utils]
+   [clojure-mcp.tools.form-edit.core :as core]
+   [clojure-mcp.tools.read-file.file-timestamps :as file-timestamps]
+   [clojure-mcp.utils.diff :as diff-utils]
+   [clojure-mcp.utils.emacs-integration :as emacs]
+   [clojure.java.io :as io]
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
-   [clojure.java.io :as io]
-   [clojure.tools.logging :as log]))
+   [clojure.tools.logging :as log]
+   [rewrite-clj.parser :as p]
+   [rewrite-clj.zip :as z]))
 
 ;; Context map specs
 
@@ -711,7 +711,7 @@
       ctx)))
 
 (defn replace-sexp
-  [{:keys [::zloc ::match-form ::new-form ::replace-all ::whitespace-sensitive] :as ctx}]
+  [{:keys [::zloc ::match-form ::new-form ::replace-all] :as ctx}]
   (try
     (if-let [result (core/find-and-edit-multi-sexp
                      zloc

@@ -6,14 +6,13 @@
    - Editing comment blocks
    - Generating file outlines"
   (:require
+   [clojure-mcp.config :as config]
    [clojure-mcp.tool-system :as tool-system]
-   [clojure-mcp.tools.form-edit.core :as core]
    [clojure-mcp.tools.form-edit.pipeline :as pipeline]
    [clojure-mcp.utils.valid-paths :as valid-paths]
-   [clojure-mcp.config :as config]
    [clojure.string :as str]
-   [rewrite-clj.parser :as p]
-   [rewrite-clj.node :as n]))
+   [rewrite-clj.node :as n]
+   [rewrite-clj.parser :as p]))
 
 ;; Factory functions to create the tool configurations
 
@@ -171,7 +170,7 @@ Note: For `defmethod` forms, be sure to include the dispatch value (`area :recta
      :form_type form_type
      :content content}))
 
-(defmethod tool-system/execute-tool :clojure-edit-replace-form [{:keys [nrepl-client-atom] :as tool} inputs]
+(defmethod tool-system/execute-tool :clojure-edit-replace-form [tool inputs]
   (let [{:keys [file_path form_name form_type content]} inputs
         result (pipeline/edit-form-pipeline file_path form_name form_type content :replace tool)
         formatted-result (pipeline/format-result result)]
@@ -263,7 +262,7 @@ Note: For `defmethod` forms, be sure to include the dispatch value (`area :recta
      :form_type form_type
      :content content}))
 
-(defmethod tool-system/execute-tool :clojure-edit-insert-before-form [{:keys [nrepl-client-atom] :as tool} inputs]
+(defmethod tool-system/execute-tool :clojure-edit-insert-before-form [tool inputs]
   (let [{:keys [file_path form_name form_type content]} inputs
         result (pipeline/edit-form-pipeline file_path form_name form_type content :before tool)
         formatted-result (pipeline/format-result result)]
@@ -355,7 +354,7 @@ Note: For `defmethod` forms, be sure to include the dispatch value (`area :recta
      :form_type form_type
      :content content}))
 
-(defmethod tool-system/execute-tool :clojure-edit-insert-after-form [{:keys [nrepl-client-atom] :as tool} inputs]
+(defmethod tool-system/execute-tool :clojure-edit-insert-after-form [tool inputs]
   (let [{:keys [file_path form_name form_type content]} inputs
         result (pipeline/edit-form-pipeline file_path form_name form_type content :after tool)
         formatted-result (pipeline/format-result result)]
@@ -427,7 +426,7 @@ Note: For `defmethod` forms, be sure to include the dispatch value (`area :recta
      :docstring docstring}))
 
 (defmethod tool-system/execute-tool :clojure-edit-replace-docstring
-  [{:keys [nrepl-client-atom] :as tool} inputs]
+  [tool inputs]
   (let [{:keys [file_path form_name form_type docstring]} inputs
         result (pipeline/docstring-edit-pipeline file_path form_name form_type docstring tool)
         formatted-result (pipeline/format-result result)]
@@ -480,7 +479,7 @@ For reliable results, use a unique substring that appears in only one comment bl
      :comment_substring comment_substring
      :new_content new_content}))
 
-(defmethod tool-system/execute-tool :clojure-edit-comment-block [{:keys [nrepl-client-atom] :as tool} inputs]
+(defmethod tool-system/execute-tool :clojure-edit-comment-block [tool inputs]
   (let [{:keys [file_path comment_substring new_content]} inputs
         result (pipeline/comment-block-edit-pipeline file_path comment_substring new_content tool)
         formatted-result (pipeline/format-result result)]
@@ -671,7 +670,7 @@ Returns a diff showing the changes made to the file.")
      :replace_all (boolean (or replace_all false))
      :whitespace_sensitive (boolean (or whitespace_sensitive false))}))
 
-(defmethod tool-system/execute-tool :clojure-edit-replace-sexp [{:keys [nrepl-client-atom] :as tool} inputs]
+(defmethod tool-system/execute-tool :clojure-edit-replace-sexp [tool inputs]
   (let [{:keys [file_path match_form new_form replace_all whitespace_sensitive]} inputs
         result (pipeline/sexp-replace-pipeline
                 file_path match_form new_form replace_all whitespace_sensitive tool)

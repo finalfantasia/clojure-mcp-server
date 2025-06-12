@@ -2,10 +2,10 @@
   "Core functionality for project inspection and analysis.
    This namespace provides the implementation details for analyzing project structure."
   (:require
+   [clojure-mcp.config :as config]
+   [clojure-mcp.nrepl :as nrepl]
    [clojure.edn :as edn]
-   [clojure.string :as str]
-   [clojure-mcp.nrepl :as mcp-nrepl]
-   [clojure-mcp.config :as config]))
+   [clojure.string :as str]))
 
 (defn inspect-project-code
   "REPL expression to gather project information including paths, dependencies, and source files.
@@ -182,7 +182,7 @@
         result-promise (promise)
         allowed-directories (config/get-allowed-directories nrepl-client)]
     (try
-      (let [edn-result (mcp-nrepl/tool-eval-code nrepl-client insp-code)]
+      (let [edn-result (nrepl/tool-eval-code nrepl-client insp-code)]
         (if (or (nil? edn-result) (.startsWith edn-result "Error"))
           (deliver result-promise
                    {:outputs [(or edn-result "Error during project inspection")]
@@ -199,7 +199,6 @@
 
 (comment
   ;; Test the project inspection in the REPL
-  (require '[clojure-mcp.nrepl :as nrepl])
   (def client (nrepl/create {:port 7888}))
   (nrepl/start-polling client)
 

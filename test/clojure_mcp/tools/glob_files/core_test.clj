@@ -1,7 +1,7 @@
 (ns clojure-mcp.tools.glob-files.core-test
-  (:require [clojure.test :refer :all]
-            [clojure-mcp.tools.glob-files.core :as sut]
-            [clojure.java.io :as io])
+  (:require [clojure-mcp.tools.glob-files.core :as sut]
+            [clojure.java.io :as io]
+            [clojure.test :refer [deftest is testing]])
   (:import (java.nio.file Paths)))
 
 (deftest glob-files-test

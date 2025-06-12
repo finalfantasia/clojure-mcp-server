@@ -3,9 +3,9 @@
   (:require
    [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.tools.scratch-pad.core :as core]
+   [clojure.pprint]
    [clojure.tools.logging :as log]
-   [clojure.walk :as walk]
-   [clojure.pprint :as pprint]))
+   [clojure.walk :as walk]))
 
 (defn get-scratch-pad
   "Gets the current scratch pad data from the nrepl-client.
@@ -141,11 +141,11 @@ Viewing tasks:
   {:type "object"
    :properties {"op" {:type "string"
                       :enum ["set_path" "get_path" "delete_path" "inspect"]
-                      :description "The operation to perform either\n * set_path: set a value at a path\n * get_path: retrieve a value at a path\n * delete_path: remove the value at the path the data structure\n * inspect: view the datastructure (or a specific path within it) up to a certain depth"}
+                      :description "The operation to perform either\n * set_path: set a value at a path\n * get_path: retrieve a value at a path\n * delete_path: remove the value at the path the data structure\n * inspect: view the data structure (or a specific path within it) up to a certain depth"}
                 "path" {:type "array"
                         :items {:type ["string" "number"]}
                         :description "Path to the data location (array of string or number keys) this works for all operations including inspect"}
-                "value" {:description "Value to store (for set_path). Can be aany JSON value EXCEPT null: object, array, string, number, boolean."
+                "value" {:description "Value to store (for set_path). Can be any JSON value EXCEPT null: object, array, string, number, boolean."
                          :type ["object" "array" "string" "number" "boolean"]}
                 "explanation" {:type "string"
                                :description "Explanation of why this operation is being performed"}
@@ -153,7 +153,7 @@ Viewing tasks:
                          :description "(Optional) For inspect operation: Maximum depth to display (default: 5). Must be a positive integer."}}
    :required ["op" "explanation"]})
 
-(defmethod tool-system/validate-inputs :scratch-pad [{:keys [nrepl-client-atom]} inputs]
+(defmethod tool-system/validate-inputs :scratch-pad [_tool-config inputs]
   ;; convert set_path path nil -> delete_path path
   ;; this can prevent nil values from being in the data?
   (let [inputs (if (and
@@ -163,7 +163,7 @@ Viewing tasks:
                     (:path inputs))
                  (assoc inputs :op "delete_path")
                  inputs)
-        {:keys [op path value explanation depth]} inputs]
+        {:keys [op path explanation depth]} inputs]
 
     ;; Check required parameters
     (when-not op
@@ -237,8 +237,8 @@ Viewing tasks:
       {:error true
        :result (str "Error executing scratch pad operation: " (.getMessage e))})))
 
-;; this is convoluted this can be stream lined as most of this is imply echoing back what was sent
-(defmethod tool-system/format-results :scratch-pad [_ {:keys [error message result explanation]}]
+;; this is convoluted this can be streamlined as most of this is implied echoing back what was sent
+(defmethod tool-system/format-results :scratch-pad [_ {:keys [error result]}]
   (if error
     {:result [result]
      :error true}

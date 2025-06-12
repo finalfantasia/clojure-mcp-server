@@ -1,10 +1,8 @@
 (ns clojure-mcp.tools.unified-read-file.pattern-core
   "Core implementation for pattern-based Clojure file exploration."
   (:require
-   [rewrite-clj.zip :as z]
-   [rewrite-clj.node :as n]
-   [clojure.string :as str]
-   [clojure-mcp.tools.form-edit.core :as form-edit]))
+   [clojure-mcp.tools.form-edit.core :as form-edit]
+   [rewrite-clj.zip :as z]))
 
 (defn valid-form-to-include?
   "Checks if a form should be included in analysis, excluding comments unless specified."
@@ -108,14 +106,14 @@
 
 (comment
   (def tmp-path "/Users/bruce/workspace/llempty/clojure-mcp/src/clojure_mcp/tools/form_edit/tool.clj")
-  
+
   (-> (collect-top-level-forms tmp-path false)
       (filter-forms-by-pattern "validate" nil)
       :matches
       (->>
-         (form-edit/generate-collapsed-file-view tmp-path))
-      println
-      )
+       (form-edit/generate-collapsed-file-view tmp-path))
+      println))
 
-  )
+
+
 

@@ -2,7 +2,6 @@
   "Implementation of the read-file tool using the tool-system multimethod approach."
   (:require
    [clojure-mcp.tool-system :as tool-system]
-   [clojure-mcp.tools.read-file.core :as core]
    [clojure-mcp.tools.read-file.file-timestamps :as file-timestamps]
    [clojure-mcp.utils.valid-paths :as valid-paths]
    [clojure.java.io :as io]))
@@ -71,7 +70,9 @@
     (file-timestamps/read-file-with-timestamp
      nrepl-client-atom path offset limit :max-line-length max-line-length)))
 
-(defmethod tool-system/format-results :read-file [_ {:keys [error path content truncated? line-count offset max-lines line-lengths-truncated? truncated-by] :as result}]
+(defmethod tool-system/format-results :read-file
+  [_ {:keys [error path content truncated? line-count offset max-lines
+             line-lengths-truncated? truncated-by] :as _result}]
   (if error
     ;; If there's an error, return it with error flag true
     {:result [error]

@@ -2,8 +2,8 @@
   "Core implementation for the eval tool.
    This namespace contains the pure functionality without any MCP-specific code."
   (:require
-   [clojure-mcp.nrepl :as nrepl]
    [clojure-mcp.linting :as linting]
+   [clojure-mcp.nrepl :as nrepl]
    [clojure-mcp.sexp.paren-utils :as paren-utils]
    [clojure.string :as string]
    [clojure.tools.logging :as log]))
@@ -53,7 +53,7 @@
    Returns:
    - A map with :outputs (raw outputs), :error (boolean flag)"
   [nrepl-client opts]
-  (let [{:keys [code ns timeout-ms session]} opts
+  (let [{:keys [code timeout-ms session]} opts
         timeout-ms (or timeout-ms 20000)
         outputs (atom [])
         error-occurred (atom false)

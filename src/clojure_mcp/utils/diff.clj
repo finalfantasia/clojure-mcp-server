@@ -1,6 +1,6 @@
 (ns clojure-mcp.utils.diff
-  (:require [clojure.string :as str]
-            [clojure.java.shell :as shell]))
+  (:require [clojure.java.shell :as shell]
+            [clojure.string :as str]))
 
 (defn diff-has-tmp-file-headers?
   [lines]

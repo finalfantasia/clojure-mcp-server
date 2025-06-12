@@ -1,10 +1,9 @@
 (ns clojure-mcp.tools.unified-read-file.pattern-core-test
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures]]
    [clojure-mcp.tools.unified-read-file.pattern-core :as pattern-core]
-   [rewrite-clj.zip :as z]
    [clojure.java.io :as io]
-   [clojure.string :as str]))
+   [clojure.test :refer [deftest is testing use-fixtures]]
+   [rewrite-clj.zip :as z]))
 
 ;; Test fixture setup
 (def ^:dynamic *test-dir* nil)
