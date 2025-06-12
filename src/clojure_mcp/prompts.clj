@@ -1,9 +1,9 @@
 (ns clojure-mcp.prompts
   "Prompt definitions for the MCP server"
-  (:require [clojure.string :as str]
+  (:require [clojure-mcp.config :as config]
             [clojure.java.io :as io]
-            [pogonos.core :as pg]
-            [clojure-mcp.config :as config])) ; Added config require
+            [clojure.string :as str]
+            [pogonos.core :as pg]))
 
 (defn simple-content-prompt-fn
   "Returns a prompt-fn that ignores request arguments and returns
@@ -40,7 +40,7 @@
                                                     {:root-directory
                                                      working-dir})}]})
                   (clj-result-k
-                   {:description (str "Root directory not found.")
+                   {:description "Root directory not found."
                     :messages [{:role :user
                                 :content
                                 (str "Root directory not provided So this will not be a prompt." "::" working-dir "::")}]})))})
@@ -57,7 +57,7 @@
 
 (def clojure-spec-driven-modifier
   {:name "clj-spec-driven-modifier"
-   :description "Spec first modifer for REPL-driven development"
+   :description "Spec first modifier for REPL-driven development"
    :arguments [] ;; No arguments needed
    :prompt-fn (simple-content-prompt-fn
                "Spec-Driven-Development Modifier for Clojure"
@@ -65,7 +65,7 @@
 
 (def clojure-test-driven-modifier
   {:name "clj-test-driven-modifier"
-   :description "Test driven modifer for REPL-driven development"
+   :description "Test driven modifier for REPL-driven development"
    :arguments [] ;; No arguments needed
    :prompt-fn (simple-content-prompt-fn
                "Test-Driven-Development Modifier for Clojure"
@@ -89,16 +89,16 @@
 
 (def plan-and-execute
   {:name "plan-and-execute"
-   :description "Use the scratch pad tool to plan and execute an change"
+   :description "Use the scratch pad tool to plan and execute a change"
    :arguments []
    :prompt-fn (simple-content-prompt-fn
                "Plan and Execute"
-               "I'd like you to make a Plan using the scratch_pad tool. 
+               "I'd like you to make a Plan using the scratch_pad tool.
 
 1. Determine questions that need answers
 2. Research the answers to those questions using the tools available
 3. Create a list of Tasks
-4. Execute the Tasks updating them 
+4. Execute the Tasks updating them
 5. Go back to Step 1 if more questions and research are needed to accomplish the goal
 
 Create and execute the plan to accomplish the following query")})

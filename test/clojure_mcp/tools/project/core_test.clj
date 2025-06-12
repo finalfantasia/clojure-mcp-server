@@ -1,8 +1,8 @@
 (ns clojure-mcp.tools.project.core-test
-  (:require [clojure.test :refer [deftest is testing]]
-            [clojure.java.io :as io]
+  (:require [clojure-mcp.tools.project.core :refer [inspect-project-code]]
             [clojure.edn :as edn]
-            [clojure-mcp.tools.project.core :refer [inspect-project-code]]))
+            [clojure.java.io :as io]
+            [clojure.test :refer [deftest is testing]]))
 
 (deftest inspect-project-code-test
   (testing "inspect-project-code generates valid REPL expression"

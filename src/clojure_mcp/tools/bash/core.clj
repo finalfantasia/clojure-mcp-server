@@ -1,15 +1,15 @@
 (ns clojure-mcp.tools.bash.core
   "Core bash command execution functionality"
   (:require
+   [clojure-mcp.nrepl :as nrepl]
+   [clojure-mcp.tools.eval.core :as eval-core]
+   [clojure.edn :as edn]
    [clojure.java.io :as io]
    [clojure.string :as str]
-   [clojure.edn :as edn]
-   [clojure.tools.logging :as log]
-   [clojure-mcp.nrepl :as nrepl]
-   [clojure-mcp.tools.eval.core :as eval-core])
+   [clojure.tools.logging :as log])
   (:import
-   (java.util.concurrent TimeUnit TimeoutException)
-   (java.io InputStreamReader BufferedReader)))
+   (java.io BufferedReader InputStreamReader)
+   (java.util.concurrent TimeUnit)))
 
 ;; 3 minutes? some test suites take much longer.
 ;; TODO this should go into the config.
@@ -45,7 +45,7 @@
                        :error-details "The command contains restricted operations"})))
     (log/debug "Executing bash command" command args)
     ;; Set up the ProcessBuilder
-    (let [pb (ProcessBuilder. (into-array ["bash" "-c" command]))
+    (let [pb (^[String/1] ProcessBuilder/new (into-array ["bash" "-c" command]))
           _ (when working-directory
               (.directory pb (io/file working-directory)))
           process (.start pb)]
@@ -131,7 +131,7 @@
    (into {:stdout ""
           :stderr (format
                    "Bash Tool execution failed.
-IMPORTANT this was an error internal to the bash tool and and most likely has nothing to do with the bash command you submited.
+IMPORTANT this was an error internal to the bash tool and and most likely has nothing to do with the bash command you submitted.
 EDN parsing failed: %s\nRaw result: %s"
                    (.getMessage ex)
                    inner-value)
@@ -141,7 +141,7 @@ EDN parsing failed: %s\nRaw result: %s"
          opts)))
 
 (defn execute-bash-command-nrepl
-  [nrepl-client-atom {:keys [command working-directory timeout-ms] :as args}]
+  [nrepl-client-atom {:keys [command working-directory timeout-ms] :as _args}]
   (let [timeout-ms (or timeout-ms default-timeout-ms)]
     (when-not (command-allowed? command)
       (throw (ex-info "Command not allowed due to security restrictions"
@@ -161,7 +161,7 @@ EDN parsing failed: %s\nRaw result: %s"
       (when (:error result)
         (log/warn "REPL evaluation failed for bash command"
                   {:command command
-                   :nrelp-eval-output-map output-map
+                   :nrepl-eval-output-map output-map
                    :working-directory working-directory
                    :timeout-ms timeout-ms
                    :eval-timeout-ms eval-timeout-ms
@@ -197,7 +197,7 @@ EDN parsing failed: %s\nRaw result: %s"
               :error "bash-command-failed"})))))))
 
 (comment
-  (require '[clojure-mcp.config :as config])
+  #_(require '[clojure-mcp.config :as config])
 
   (def client-atom (atom (clojure-mcp.nrepl/create {:port 7888})))
   #_(config/set-config! client-atom :nrepl-user-dir (System/getProperty "user.dir"))

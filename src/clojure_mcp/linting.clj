@@ -2,12 +2,13 @@
   (:require
    [clj-kondo.core :as kondo]
    [clj-kondo.impl.parser :as parser]
-   [clojure.string :as string]))
+   [clojure.string :as string])
+  (:import (clojure.lang ExceptionInfo)))
 
 (defn lint
   "Lints Clojure code string using clj-kondo.
    Returns nil if no issues found, or map with :report and :error? keys.
-   
+
    Options:
    - lang: Language type (:clj, :cljs, or :cljc)"
   ([form-str] (lint form-str {}))
@@ -60,7 +61,7 @@
     (parser/parse-string str)
     ;; linting passes
     false
-    (catch clojure.lang.ExceptionInfo e
+    (catch ExceptionInfo e
       (if-let [findings (:findings (ex-data e))]
         {:report
          (some->> findings

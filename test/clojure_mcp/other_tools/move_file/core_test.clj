@@ -1,8 +1,8 @@
 (ns clojure-mcp.other-tools.move-file.core-test
-  (:require [clojure.test :refer :all]
-            [clojure-mcp.other-tools.move-file.core :as core]
+  (:require [clojure-mcp.other-tools.move-file.core :as core]
             [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is testing use-fixtures]]))
 
 ;; Dynamic variables for test directories and files
 (def ^:dynamic *test-dir* nil)

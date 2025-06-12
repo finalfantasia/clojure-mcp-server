@@ -2,8 +2,8 @@
 
 (ns clj-mcp.repl-tools
   "Namespace containing helper functions for REPL-driven development"
-  (:require [clojure.string :as str]
-            [clojure.pprint :as pprint]))
+  (:require [clojure.pprint :as pprint]
+            [clojure.string :as str]))
 
 ;; Namespace exploration
 (defn list-ns

@@ -1,7 +1,7 @@
 (ns clojure-mcp.tools.directory-tree.core-test
-  (:require [clojure.test :refer :all]
-            [clojure-mcp.tools.directory-tree.core :as sut]
-            [clojure.java.io :as io]))
+  (:require [clojure-mcp.tools.directory-tree.core :as sut]
+            [clojure.java.io :as io]
+            [clojure.test :refer [deftest is testing]]))
 
 (deftest directory-tree-test
   (testing "directory-tree generates proper tree structure"

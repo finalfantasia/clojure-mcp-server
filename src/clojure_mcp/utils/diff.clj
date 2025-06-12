@@ -1,6 +1,7 @@
 (ns clojure-mcp.utils.diff
-  (:require [clojure.string :as str]
-            [clojure.java.shell :as shell]))
+  (:require [clojure.java.shell :as shell]
+            [clojure.string :as str])
+  (:import (java.io File)))
 
 (defn diff-has-tmp-file-headers?
   [lines]
@@ -26,8 +27,8 @@
   [file1-content file2-content context-lines]
   (let [temp-prefix "clj-diff-"
         temp-suffix ".tmp"
-        file1 (java.io.File/createTempFile temp-prefix temp-suffix)
-        file2 (java.io.File/createTempFile temp-prefix temp-suffix)]
+        file1 (File/createTempFile temp-prefix temp-suffix)
+        file2 (File/createTempFile temp-prefix temp-suffix)]
     (try
       (spit file1 file1-content)
       (spit file2 file2-content)

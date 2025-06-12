@@ -1,31 +1,27 @@
 (ns clojure-mcp.main
-  (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]
-            [clojure.string :as str]
-            [clojure.tools.logging :as log]
-            [clojure-mcp.core :as core]
-            [clojure-mcp.nrepl :as nrepl]
-            [clojure-mcp.prompts :as prompts]
-            [clojure-mcp.tools.project.core :as project]
-            [clojure-mcp.resources :as resources]
-            [clojure-mcp.config :as config]
-            ;; tools
-            [clojure-mcp.tools.directory-tree.tool :as directory-tree-tool]
-            [clojure-mcp.tools.eval.tool :as eval-tool]
-            [clojure-mcp.tools.unified-read-file.tool :as unified-read-file-tool]
-            [clojure-mcp.tools.grep.tool :as new-grep-tool]
-            [clojure-mcp.tools.glob-files.tool :as glob-files-tool]
-            [clojure-mcp.tools.think.tool :as think-tool]
-            [clojure-mcp.tools.bash.tool :as bash-tool]
-            [clojure-mcp.tools.form-edit.combined-edit-tool :as combined-edit-tool]
-            [clojure-mcp.tools.form-edit.tool :as new-form-edit-tool]
-            [clojure-mcp.tools.file-edit.tool :as file-edit-tool]
-            [clojure-mcp.tools.file-write.tool :as file-write-tool]
-            [clojure-mcp.tools.dispatch-agent.tool :as dispatch-agent-tool]
-            [clojure-mcp.tools.architect.tool :as architect-tool]
-            [clojure-mcp.tools.code-critique.tool :as code-critique-tool]
-            [clojure-mcp.tools.project.tool :as project-tool]
-            [clojure-mcp.tools.scratch-pad.tool :as scratch-pad-tool]))
+  (:require
+   [clojure-mcp.config :as config]
+   [clojure-mcp.core :as core]
+   [clojure-mcp.prompts :as prompts]
+   [clojure-mcp.resources :as resources]
+   [clojure-mcp.tools.architect.tool :as architect-tool]
+   [clojure-mcp.tools.bash.tool :as bash-tool]
+   [clojure-mcp.tools.code-critique.tool :as code-critique-tool]
+   [clojure-mcp.tools.directory-tree.tool :as directory-tree-tool]
+   [clojure-mcp.tools.dispatch-agent.tool :as dispatch-agent-tool]
+   [clojure-mcp.tools.eval.tool :as eval-tool]
+   [clojure-mcp.tools.file-edit.tool :as file-edit-tool]
+   [clojure-mcp.tools.file-write.tool :as file-write-tool]
+   [clojure-mcp.tools.form-edit.combined-edit-tool :as combined-edit-tool]
+   [clojure-mcp.tools.form-edit.tool :as new-form-edit-tool]
+   [clojure-mcp.tools.glob-files.tool :as glob-files-tool]
+   [clojure-mcp.tools.grep.tool :as new-grep-tool]
+   [clojure-mcp.tools.project.core :as project]
+   [clojure-mcp.tools.project.tool :as project-tool]
+   [clojure-mcp.tools.scratch-pad.tool :as scratch-pad-tool]
+   [clojure-mcp.tools.think.tool :as think-tool]
+   [clojure-mcp.tools.unified-read-file.tool :as unified-read-file-tool]
+   [clojure.java.io :as io]))
 
 (def nrepl-client-atom (atom nil))
 
@@ -119,7 +115,7 @@
    ;; not sure how useful this is
    (architect-tool/architect-tool nrepl-client-atom)
 
-   ;; experimental 
+   ;; experimental
    (code-critique-tool/code-critique-tool nrepl-client-atom)])
 
 ;; not sure if this is even needed
@@ -174,6 +170,6 @@
                            "then provide detailed feedback.")}]})))})
 
 ;; -Djdk.attach.allowAttachSelf is needed on the nrepl server if you want the mcp-server eval tool
-;; to be able to interrupt long running evals
+;; to be able to interrupt long-running evals
 
 ;; TODO make a main fn that uses clojure.tools.cli and takes port host and tls-keys-file args
