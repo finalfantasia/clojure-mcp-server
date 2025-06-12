@@ -63,7 +63,7 @@ clojure_inspect_project()")
 (comment
   ;; === Examples of using the project inspection tool ===
   (require 'clojure-mcp.nrepl)
-  
+
   ;; Setup for REPL-based testing
   (def client-atom (atom (clojure-mcp.nrepl/create {:port 7888})))
   (clojure-mcp.nrepl/start-polling @client-atom)

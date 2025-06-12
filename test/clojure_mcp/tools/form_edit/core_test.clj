@@ -1,12 +1,12 @@
 (ns clojure-mcp.tools.form-edit.core-test
   (:require
-   [clojure-mcp.tools.test-utils :as test-utils]
    [clojure-mcp.config :as config]
-   [clojure.test :refer [deftest testing is use-fixtures]]
    [clojure-mcp.tools.form-edit.core :as sut]
-   [rewrite-clj.zip :as z]
+   [clojure-mcp.tools.test-utils :as test-utils]
    [clojure.java.io :as io]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing use-fixtures]]
+   [rewrite-clj.zip :as z]))
 
 ;; Test fixtures
 (def ^:dynamic *test-dir* nil)
@@ -181,8 +181,7 @@
 
   (testing "is-line-comment? correctly identifies line comments"
     (let [source "(ns test.core)\n\n;; This is a comment\n(defn example-fn [x y]\n  (+ x y))"
-          zloc (get-zloc source)
-          comment-loc (z/right zloc)] ;; Try to move to comment
+          zloc (get-zloc source)]
       ;; Note: This test might be fragile as rewrite-clj might handle comments differently
       (is (not (sut/is-line-comment? zloc))))))
 

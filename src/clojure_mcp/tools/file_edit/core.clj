@@ -103,13 +103,12 @@
   "Perform the actual file edit operation.
    
    Parameters:
-   - file-path: The path to the file
    - old-string: The string to replace
    - new-string: The replacement string
    - file-content: The current file content
    
    Returns the new file content."
-  [file-path old-string new-string file-content]
+  [old-string new-string file-content]
   ;; Edit existing file
   (str/replace-first file-content old-string new-string))
 
@@ -154,7 +153,7 @@
   (validate-file-edit test-file "" "New content" (slurp test-file))
 
   ;; Test editing
-  (perform-file-edit test-file "Line 3" "Line 3 - EDITED" (slurp test-file))
+  (perform-file-edit "Line 3" "Line 3 - EDITED" (slurp test-file))
 
   ;; Clean up
   (.delete (io/file test-file)))

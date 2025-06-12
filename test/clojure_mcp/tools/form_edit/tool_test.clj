@@ -1,16 +1,14 @@
 (ns clojure-mcp.tools.form-edit.tool-test
   (:require
-   [clojure.test :refer [deftest testing is use-fixtures]]
-   [clojure-mcp.tools.form-edit.tool :as sut]
-   [clojure-mcp.tools.form-edit.pipeline :as pipeline]
+   [clojure-mcp.config :as config] ; Added config require
    [clojure-mcp.tool-system :as tool-system]
+   [clojure-mcp.tools.form-edit.tool :as sut]
    [clojure-mcp.tools.read-file.file-timestamps :as file-timestamps]
    [clojure-mcp.tools.test-utils :as test-utils]
-   [clojure-mcp.config :as config] ; Added config require
    [clojure.java.io :as io]
    [clojure.string :as str]
-   [rewrite-clj.parser :as p]
-   [rewrite-clj.node :as n]))
+   [clojure.test :refer [deftest is testing use-fixtures]])
+  (:import (clojure.lang ExceptionInfo)))
 
 ;; Test fixtures
 (def ^:dynamic *test-dir* nil)
@@ -53,7 +51,8 @@
                       ;; Make sure we have a valid nREPL client atom for tests
                       (test-utils/test-nrepl-fixture
                        (fn []
-                          ;; Set up global client atom for tests
+                         ;; Set up global client atom for tests
+                         #_:clj-kondo/ignore
                          (def client-atom-for-tests test-utils/*nrepl-client-atom*)
                           ;; Run the actual test
                          (binding [test-utils/*nrepl-client-atom* test-utils/*nrepl-client-atom*]
@@ -94,10 +93,10 @@
    ;; Test result content format
    (is (vector? (:result result)) "Result should be a vector")
    (is (every? string? (:result result)) "All result items should be strings")
-   (is (not (empty? (:result result))) "Result should not be empty")
+   (is (seq (:result result)) "Result should not be empty")
 
    ;; Test specific content pattern if provided
-   (when (and diff-pattern-fn (not (empty? (:result result))))
+   (when (and diff-pattern-fn (seq (:result result)))
      (is (diff-pattern-fn (first (:result result)))
          "Result content should match expected pattern"))
 
@@ -210,14 +209,14 @@
           (is (= "defn" (:form_type validated)))
           (is (= "(defn example-fn [x] (* x 2))" (:content validated))))
 
-        (is (thrown? clojure.lang.ExceptionInfo
+        (is (thrown? ExceptionInfo
                      (tool-system/validate-inputs replace-tool
                                                   {:form_identifier "example-fn"
                                                    :form_type "defn"
                                                    :content "(defn example-fn [x] (* x 2))"}))
             "Should throw exception when file_path is missing")
 
-        (is (thrown? clojure.lang.ExceptionInfo
+        (is (thrown? ExceptionInfo
                      (tool-system/validate-inputs replace-tool
                                                   {:file_path (get-file-path)
                                                    :form_type "defn"
@@ -237,7 +236,7 @@
           (is (= "defn" (:form_type validated)))
           (is (= "New docstring" (:docstring validated))))
 
-        (is (thrown? clojure.lang.ExceptionInfo
+        (is (thrown? ExceptionInfo
                      (tool-system/validate-inputs docstring-tool
                                                   {:file_path (get-file-path)
                                                    :form_identifier "example-fn"
@@ -255,7 +254,7 @@
           (is (= "Test comment" (:comment_substring validated)))
           (is (= ";; Updated comment" (:new_content validated))))
 
-        (is (thrown? clojure.lang.ExceptionInfo
+        (is (thrown? ExceptionInfo
                      (tool-system/validate-inputs comment-tool
                                                   {:file_path (get-file-path)
                                                    :new_content ";; Updated comment"}))
@@ -283,18 +282,12 @@
           valid-inputs {:file_path (get-file-path)
                         :match_form "(+ x y)"
                         :new_form "(+ x (* y 2))"}
-          invalid-inputs {:file_path (get-file-path)
-                          :match_form "(+ x y) (- x y)" ;; Multiple forms!
-                          :new_form "(+ x (* y 2))"}
-          another-invalid {:file_path (get-file-path)
-                           :match_form "(def a 1) (def b 2)" ;; Multiple forms!
-                           :new_form "(+ x (* y 2))"}]
 
-      ;; Test valid input is accepted
-      (let [validated (tool-system/validate-inputs sexp-tool valid-inputs)]
-        (is (string? (:file_path validated)))
-        (is (= "(+ x y)" (:match_form validated)))
-        (is (= "(+ x (* y 2))" (:new_form validated)))))))
+          ;; Test valid input is accepted
+          validated (tool-system/validate-inputs sexp-tool valid-inputs)]
+      (is (string? (:file_path validated)))
+      (is (= "(+ x y)" (:match_form validated)))
+      (is (= "(+ x (* y 2))" (:new_form validated))))))
 
 ;; Integration tests for backward compatibility functions
 (deftest backward-compatibility-test
@@ -302,11 +295,7 @@
     (let [client-atom *client-atom*
           replace-reg (sut/top-level-form-edit-tool client-atom)
           before-reg (sut/top-level-form-insert-before-tool client-atom)
-          after-reg (sut/top-level-form-insert-after-tool client-atom)
-          docstring-reg (sut/docstring-edit-tool client-atom)
-          comment-reg (sut/comment-block-edit-tool client-atom)
-          structure-reg (sut/clojure-file-outline-tool client-atom)]
-
+          comment-reg (sut/comment-block-edit-tool client-atom)]
       (testing "Registration maps have correct structure"
         (is (string? (:name replace-reg)))
         (is (string? (:description replace-reg)))
@@ -577,66 +566,66 @@
 
           ;; Validate file was actually modified
               (is (str/includes? file-content "area :triangle") "New triangle method should be in the file")
-              (is (str/includes? file-content "(* 0.5 (:base triangle) (:height triangle))") "Triangle implementation should be in the file"))))))
+              (is (str/includes? file-content "(* 0.5 (:base triangle) (:height triangle))") "Triangle implementation should be in the file"))))))))
 
 ;; Tool-fn tests through the callback interface
-    (deftest tool-fn-test
-      (testing "Tool-fn works with callbacks"
-        (let [client-atom test-utils/*nrepl-client-atom*
-              replace-reg (sut/top-level-form-edit-tool client-atom)
-              replace-fn (:tool-fn replace-reg)
-              [p1 cb1] (make-callback)
+(deftest tool-fn-test
+  (testing "Tool-fn works with callbacks"
+    (let [client-atom test-utils/*nrepl-client-atom*
+          replace-reg (sut/top-level-form-edit-tool client-atom)
+          replace-fn (:tool-fn replace-reg)
+          [p1 cb1] (make-callback)
 
-              comment-reg (sut/comment-block-edit-tool client-atom)
-              comment-fn (:tool-fn comment-reg)
-              [p2 cb2] (make-callback)
+          comment-reg (sut/comment-block-edit-tool client-atom)
+          comment-fn (:tool-fn comment-reg)
+          [p2 cb2] (make-callback)
 
-              structure-reg (sut/clojure-file-outline-tool client-atom)
-              structure-fn (:tool-fn structure-reg)
-              [p3 cb3] (make-callback)]
+          structure-reg (sut/clojure-file-outline-tool client-atom)
+          structure-fn (:tool-fn structure-reg)
+          [p3 cb3] (make-callback)]
 
-          (testing "Replace form tool works via callback"
-            ;; Register file as read so we can modify it
-            (test-utils/read-and-register-test-file client-atom (get-file-path))
-            (replace-fn nil
-                        {"file_path" (get-file-path)
-                         "form_identifier" "example-fn"
-                         "form_type" "defn"
-                         "content" "(defn example-fn [x]\n  (str \"result: \" (* x 3)))"}
-                        cb1)
-            (let [result @p1]
-              ;; Validate MCP response format
-              (validate-mcp-result result)
-              ;; Verify the actual file modification
-              (is (str/includes? (slurp (get-file-path)) "(str \"result: \" (* x 3))")
-                  "The file should contain the updated function implementation")))
+      (testing "Replace form tool works via callback"
+        ;; Register file as read so we can modify it
+        (test-utils/read-and-register-test-file client-atom (get-file-path))
+        (replace-fn nil
+                    {"file_path" (get-file-path)
+                     "form_identifier" "example-fn"
+                     "form_type" "defn"
+                     "content" "(defn example-fn [x]\n  (str \"result: \" (* x 3)))"}
+                    cb1)
+        (let [result @p1]
+          ;; Validate MCP response format
+          (validate-mcp-result result)
+          ;; Verify the actual file modification
+          (is (str/includes? (slurp (get-file-path)) "(str \"result: \" (* x 3))")
+              "The file should contain the updated function implementation")))
 
-          (testing "Comment tool works via callback"
-            ;; Register file as read so we can modify it
-            (test-utils/read-and-register-test-file client-atom (get-file-path))
-            (comment-fn nil
-                        {"file_path" (get-file-path)
-                         "comment_substring" "(example-fn"
-                         "new_content" "(comment\n  (example-fn 10 20))"}
-                        cb2)
-            (let [result @p2]
-              ;; Validate MCP response format
-              (validate-mcp-result result)
-              ;; Verify the actual file modification
-              (is (str/includes? (slurp (get-file-path)) "(example-fn 10 20)")
-                  "The file should contain the updated comment")))
+      (testing "Comment tool works via callback"
+        ;; Register file as read so we can modify it
+        (test-utils/read-and-register-test-file client-atom (get-file-path))
+        (comment-fn nil
+                    {"file_path" (get-file-path)
+                     "comment_substring" "(example-fn"
+                     "new_content" "(comment\n  (example-fn 10 20))"}
+                    cb2)
+        (let [result @p2]
+          ;; Validate MCP response format
+          (validate-mcp-result result)
+          ;; Verify the actual file modification
+          (is (str/includes? (slurp (get-file-path)) "(example-fn 10 20)")
+              "The file should contain the updated comment")))
 
-          (testing "Structure tool works via callback"
-            ;; Register file as read so we can read its structure
-            (test-utils/read-and-register-test-file client-atom (get-file-path))
-            (structure-fn nil
-                          {"file_path" (get-file-path)}
-                          cb3)
-            (let [result @p3
-                  outline (first (:result result))]
-              ;; Validate MCP response format
-              (validate-mcp-result result)
-              ;; Verify the outline content
-              (is (string? outline) "The outline should be a string")
-              (is (str/includes? outline "(ns test.core)") "The outline should include the namespace")
-              (is (str/includes? outline "(defn example-fn") "The outline should include function signatures"))))))))
+      (testing "Structure tool works via callback"
+        ;; Register file as read so we can read its structure
+        (test-utils/read-and-register-test-file client-atom (get-file-path))
+        (structure-fn nil
+                      {"file_path" (get-file-path)}
+                      cb3)
+        (let [result @p3
+              outline (first (:result result))]
+          ;; Validate MCP response format
+          (validate-mcp-result result)
+          ;; Verify the outline content
+          (is (string? outline) "The outline should be a string")
+          (is (str/includes? outline "(ns test.core)") "The outline should include the namespace")
+          (is (str/includes? outline "(defn example-fn") "The outline should include function signatures"))))))

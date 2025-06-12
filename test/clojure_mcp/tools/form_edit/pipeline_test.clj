@@ -1,13 +1,12 @@
 (ns clojure-mcp.tools.form-edit.pipeline-test
   (:require
-   [clojure.test :refer [deftest testing is use-fixtures]]
    [clojure-mcp.config :as config]
    [clojure-mcp.tools.form-edit.pipeline :as sut]
-   [clojure-mcp.tools.form-edit.core :as core]
    [clojure-mcp.tools.test-utils :as test-utils]
-   [rewrite-clj.zip :as z]
    [clojure.java.io :as io]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing use-fixtures]]
+   [rewrite-clj.zip :as z]))
 
 ;; Test fixtures
 (def ^:dynamic *test-dir* nil)
@@ -341,7 +340,6 @@
 (deftest comment-block-edit-pipeline-test
   (testing "comment-block-edit-pipeline edits line comment"
     (let [file-path (get-file-path)
-          file-content-before (slurp file-path)
           new-comment ";; Updated comment\n;; with new content"
           pipeline-result (sut/comment-block-edit-pipeline
                            file-path

@@ -4,9 +4,8 @@
    in a modular, extensible way."
   (:require
    [clojure.string :as string]
-   [clojure.walk :as walk]
    [clojure.tools.logging :as log]
-   [clojure.data.json :as json]))
+   [clojure.walk :as walk]))
 
 ;; Core multimethods for tool behavior
 
@@ -32,12 +31,12 @@
   "Validates inputs against the schema and returns validated/coerced inputs.
    Throws exceptions for invalid inputs.
    Dispatches on :tool-type in the tool-config."
-  (fn [tool-config inputs] (:tool-type tool-config)))
+  (fn [tool-config _inputs] (:tool-type tool-config)))
 
 (defmulti execute-tool
   "Executes the tool with the validated inputs and returns the result.
    Dispatches on :tool-type in the tool-config."
-  (fn [tool-config inputs] (:tool-type tool-config)))
+  (fn [tool-config _inputs] (:tool-type tool-config)))
 
 (defmulti format-results
   "Formats the results from tool execution into the expected MCP response format.
@@ -49,7 +48,7 @@
    (callback (:result formatted) (:error formatted))
    
    Dispatches on :tool-type in the tool-config."
-  (fn [tool-config result] (:tool-type tool-config)))
+  (fn [tool-config _result] (:tool-type tool-config)))
 
 ;; Multimethod to assemble the registration map
 

@@ -3,15 +3,15 @@
    This namespace contains the pure functionality for manipulating Clojure forms
    without any MCP-specific code."
   (:require
-   [rewrite-clj.zip :as z]
-   [rewrite-clj.parser :as p]
-   [rewrite-clj.node :as n]
-   [rewrite-clj.paredit :as par]
-   [cljfmt.core :as fmt]
    [cljfmt.config :as cljfmt-config]
+   [cljfmt.core :as fmt]
    [clojure-mcp.config :as config]
    [clojure.string :as str]
-   [clojure.java.io :as io]))
+   [rewrite-clj.node :as n]
+   [rewrite-clj.paredit :as par]
+   [rewrite-clj.parser :as p]
+   [rewrite-clj.zip :as z])
+  (:import (java.io FileNotFoundException IOException)))
 
 ;; Form identification and location functions
 
@@ -498,7 +498,7 @@
             "deftest" (str "(deftest " form-name " ...)")
             "ns" (z/string zloc) ; Always show the full namespace
             (str "(" form-type " " (or form-name "") " ...)")))))
-    (catch Exception e
+    (catch Exception _e
       ;; Provide a fallback in case of errors
       (try
         (let [raw-str (z/string zloc)]
@@ -612,7 +612,7 @@
                   (recur next-loc forms)))
               ;; Skip excluded forms
               (recur next-loc forms))))))
-    (catch java.io.FileNotFoundException _
+    (catch FileNotFoundException _e
       (throw (ex-info (str "Error: File not found: " file-path) {:file-path file-path})))
     (catch Exception e
       (throw (ex-info (str "Error generating file view: " (.getMessage e)) {} e)))))
@@ -668,10 +668,10 @@
   (try
     {:content (slurp file-path)
      :error false}
-    (catch java.io.FileNotFoundException _
+    (catch FileNotFoundException _
       {:error true
        :message (str "File not found: " file-path)})
-    (catch java.io.IOException e
+    (catch IOException e
       {:error true
        :message (str "IO error while reading file: " (.getMessage e))})))
 
@@ -827,13 +827,13 @@
       (z/insert-left (p/parse-string "(__clojure-mcp-edit-marker__)"))
       z/prev ;; inside added node
       ;; then slurp into the node
-      (as-> z (nth (iterate par/slurp-forward z) n))
+      (as-> z (nth (iterate par/slurp-forward-into z) n))
       #_(as-> z (iterate-to-n par/slurp-forward z (inc n)))
       z/up
       z/remove-preserve-newline))
 
-(defn zleft-n [zloc n]
-  (iterate-to-n z/left zloc n))
+#_(defn zleft-n [zloc n]
+    (iterate-to-n z/left zloc n))
 
 (defn zright-n [zloc n]
   (iterate-to-n z/right zloc n))
@@ -868,7 +868,7 @@
         {:edit-span-loc (-> after-insert z/left)
          :after-loc after-loc}))))
 
-(defn insert-before-multi [zloc match-sexprs replacement-node]
+(defn insert-before-multi [zloc replacement-node]
   (let [edit-loc (-> (z/insert-left zloc replacement-node)
                      z/left)]
     {:edit-span-loc edit-loc
@@ -901,7 +901,7 @@
           match-sexprs (str-forms->sexps match-form)]
       (when-let [found-loc (find-multi-sexp zloc match-sexprs)]
         (condp = operation
-          :insert-before (insert-before-multi found-loc match-sexprs new-node)
+          :insert-before (insert-before-multi found-loc new-node)
           :insert-after (insert-after-multi found-loc match-sexprs new-node)
           (replace-multi found-loc match-sexprs new-node))))))
 

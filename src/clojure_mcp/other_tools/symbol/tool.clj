@@ -1,9 +1,8 @@
 (ns clojure-mcp.other-tools.symbol.tool
   "Implementation of symbol-related tools using the tool-system multimethod approach."
   (:require
-   [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.other-tools.symbol.core :as core]
-   [clojure-mcp.nrepl :as nrepl]
+   [clojure-mcp.tool-system :as tool-system]
    [clojure.pprint :as pprint]))
 
 ;; Factory functions for creating tool configurations

@@ -1,9 +1,8 @@
 (ns clojure-mcp.prompts
   "Prompt definitions for the MCP server"
-  (:require [clojure.string :as str]
-            [clojure.java.io :as io]
-            [pogonos.core :as pg]
-            [clojure-mcp.config :as config])) ; Added config require
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
+            [pogonos.core :as pg]))
 
 (defn simple-content-prompt-fn
   "Returns a prompt-fn that ignores request arguments and returns
@@ -40,44 +39,44 @@
                                                     {:root-directory
                                                      working-dir})}]})
                   (clj-result-k
-                   {:description (str "Root directory not found.")
+                   {:description "Root directory not found."
                     :messages [{:role :user
                                 :content
                                 (str "Root directory not provided So this will not be a prompt." "::" working-dir "::")}]})))})
 
-(def clojure-system-repl-form-edit
-  {:name "clojure_repl_system_prompt"
-   :description "Provides instructions and guidelines for Clojure development, including style and best practices."
-   :arguments [] ;; No arguments needed for this prompt
-   :prompt-fn (simple-content-prompt-fn
-               "System Prompt: Clojure REPL"
-               (str
-                (load-prompt-from-resource "clojure-mcp/prompts/system/clojure_repl_form_edit.md")
-                (load-prompt-from-resource "clojure-mcp/prompts/system/clojure_form_edit.md")))})
+#_(def clojure-system-repl-form-edit
+    {:name "clojure_repl_system_prompt"
+     :description "Provides instructions and guidelines for Clojure development, including style and best practices."
+     :arguments [] ;; No arguments needed for this prompt
+     :prompt-fn (simple-content-prompt-fn
+                 "System Prompt: Clojure REPL"
+                 (str
+                  (load-prompt-from-resource "clojure-mcp/prompts/system/clojure_repl_form_edit.md")
+                  (load-prompt-from-resource "clojure-mcp/prompts/system/clojure_form_edit.md")))})
 
-(def clojure-spec-driven-modifier
-  {:name "clj-spec-driven-modifier"
-   :description "Spec first modifer for REPL-driven development"
-   :arguments [] ;; No arguments needed
-   :prompt-fn (simple-content-prompt-fn
-               "Spec-Driven-Development Modifier for Clojure"
-               (load-prompt-from-resource "clojure-mcp/prompts/spec_modifier.md"))})
+#_(def clojure-spec-driven-modifier
+    {:name "clj-spec-driven-modifier"
+     :description "Spec first modifer for REPL-driven development"
+     :arguments [] ;; No arguments needed
+     :prompt-fn (simple-content-prompt-fn
+                 "Spec-Driven-Development Modifier for Clojure"
+                 (load-prompt-from-resource "clojure-mcp/prompts/spec_modifier.md"))})
 
-(def clojure-test-driven-modifier
-  {:name "clj-test-driven-modifier"
-   :description "Test driven modifer for REPL-driven development"
-   :arguments [] ;; No arguments needed
-   :prompt-fn (simple-content-prompt-fn
-               "Test-Driven-Development Modifier for Clojure"
-               (load-prompt-from-resource "clojure-mcp/prompts/test_modifier.md"))})
+#_(def clojure-test-driven-modifier
+    {:name "clj-test-driven-modifier"
+     :description "Test driven modifer for REPL-driven development"
+     :arguments [] ;; No arguments needed
+     :prompt-fn (simple-content-prompt-fn
+                 "Test-Driven-Development Modifier for Clojure"
+                 (load-prompt-from-resource "clojure-mcp/prompts/test_modifier.md"))})
 
 #_(def incremental-file-creation
-  {:name "incremental_file_creation"
-   :description "Guide for creating Clojure files incrementally to maximize success."
-   :arguments [] ;; No arguments needed for this prompt
-   :prompt-fn (simple-content-prompt-fn
-               "Incremental File Creation for Clojure"
-               (load-prompt-from-resource "clojure-mcp/prompts/system/incremental_file_creation.md"))})
+    {:name "incremental_file_creation"
+     :description "Guide for creating Clojure files incrementally to maximize success."
+     :arguments [] ;; No arguments needed for this prompt
+     :prompt-fn (simple-content-prompt-fn
+                 "Incremental File Creation for Clojure"
+                 (load-prompt-from-resource "clojure-mcp/prompts/system/incremental_file_creation.md"))})
 
 (def scratch-pad-guide
   {:name "use-scratch-pad"

@@ -2,8 +2,8 @@
   "Core implementation for symbol-related tools.
    This namespace contains the pure functionality without any MCP-specific code."
   (:require
-   [clojure.string :as string]
-   [clojure-mcp.nrepl :as nrepl]))
+   [clojure-mcp.nrepl :as nrepl]
+   [clojure.string :as string]))
 
 (defn get-symbol-completions
   "Returns completions for a given prefix in the current namespace.

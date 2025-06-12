@@ -1,8 +1,9 @@
 (ns clojure-mcp.agent.langchain.schema-test
-  (:require [clojure.test :refer [deftest testing is are]]
-            [clojure-mcp.agent.langchain.schema :as schema]
-            [clojure.data.json :as json])
-  (:import [dev.langchain4j.model.chat.request.json
+  (:require [clojure-mcp.agent.langchain.schema :as schema]
+            [clojure.data.json :as json]
+            [clojure.test :refer [deftest is testing]])
+  (:import (dev.langchain4j.agent.tool ToolSpecification)
+           (dev.langchain4j.model.chat.request.json
             JsonAnyOfSchema
             JsonArraySchema
             JsonBooleanSchema
@@ -10,8 +11,8 @@
             JsonIntegerSchema
             JsonNumberSchema
             JsonObjectSchema
-            JsonStringSchema]
-           [dev.langchain4j.agent.tool ToolSpecification]))
+            JsonSchemaElement JsonStringSchema)
+           (java.util Map)))
 
 (deftest test-simple-schema-types
   (testing "Converting primitive type schemas"
@@ -76,16 +77,16 @@
                          :properties {:name {:type :string, :description "The name"}
                                       :age {:type :integer, :description "The age"}}
                          :required [:name]}
-          converted-object (schema/edn->sch object-schema)
-          properties (.properties converted-object)]
+          converted-object ^JsonObjectSchema (schema/edn->sch object-schema)
+          properties ^Map (.properties converted-object)]
 
       (is (instance? JsonObjectSchema converted-object))
       (is (= "A test object" (.description converted-object)))
       (is (= ["name"] (seq (.required converted-object))))
       (is (instance? JsonStringSchema (get properties "name")))
       (is (instance? JsonIntegerSchema (get properties "age")))
-      (is (= "The name" (.description (get properties "name"))))
-      (is (= "The age" (.description (get properties "age")))))))
+      (is (= "The name" (.description ^JsonSchemaElement (get properties "name"))))
+      (is (= "The age" (.description ^JsonSchemaElement (get properties "age")))))))
 
 (deftest test-nested-object-schemas
   (testing "Converting nested object schemas"
@@ -102,15 +103,15 @@
                                                  :properties {:tags {:type :array
                                                                      :items {:type :string}}}}}
                          :required [:user]}
-          converted-nested (schema/edn->sch nested-schema)
-          properties (.properties converted-nested)
-          user-schema (get properties "user")
-          user-properties (.properties user-schema)
-          details-schema (get user-properties "details")
+          converted-nested ^JsonObjectSchema (schema/edn->sch nested-schema)
+          properties ^Map (.properties converted-nested)
+          user-schema ^JsonObjectSchema (get properties "user")
+          user-properties ^Map (.properties user-schema)
+          details-schema ^JsonObjectSchema (get user-properties "details")
           details-properties (.properties details-schema)
-          metadata-schema (get properties "metadata")
+          metadata-schema ^JsonObjectSchema (get properties "metadata")
           metadata-properties (.properties metadata-schema)
-          tags-schema (get metadata-properties "tags")]
+          tags-schema ^JsonArraySchema (get metadata-properties "tags")]
 
       (is (instance? JsonObjectSchema converted-nested))
       (is (= "A nested object schema" (.description converted-nested)))
@@ -148,13 +149,13 @@
                           :required [:id :config]}
           converted-complex (schema/edn->sch complex-schema)
           properties (.properties converted-complex)
-          tags-schema (get properties "tags")
-          config-schema (get properties "config")
+          tags-schema ^JsonArraySchema (get properties "tags")
+          config-schema ^JsonObjectSchema (get properties "config")
           config-properties (.properties config-schema)
-          mode-schema (get config-properties "mode")
-          limits-schema (get config-properties "limits")
+          mode-schema ^JsonEnumSchema (get config-properties "mode")
+          limits-schema ^JsonObjectSchema (get config-properties "limits")
           limits-properties (.properties limits-schema)
-          flags-schema (get config-properties "flags")]
+          flags-schema ^JsonArraySchema (get config-properties "flags")]
 
       (is (instance? JsonObjectSchema converted-complex))
       (is (= "A complex schema" (.description converted-complex)))
@@ -211,7 +212,7 @@
         (is (= ["prompt"] (seq (.required edn-converted))))
         (is (instance? JsonStringSchema (get properties "prompt")))
         (is (instance? JsonArraySchema (get properties "options")))
-        (is (instance? JsonStringSchema (.items (get properties "options")))))
+        (is (instance? JsonStringSchema (.items ^JsonArraySchema (get properties "options")))))
 
       ;; Test with JSON string after parsing
       (let [json-converted (schema/edn->sch (json/read-str json-schema-str :key-fn keyword))
@@ -220,7 +221,7 @@
         (is (= ["prompt"] (seq (.required json-converted))))
         (is (instance? JsonStringSchema (get properties "prompt")))
         (is (instance? JsonArraySchema (get properties "options")))
-        (is (instance? JsonStringSchema (.items (get properties "options"))))))))
+        (is (instance? JsonStringSchema (.items ^JsonArraySchema (get properties "options"))))))))
 
 (deftest test-mixed-types
   (testing "Converting mixed type schemas"
@@ -267,12 +268,12 @@
     (let [array-schema {:type :array
                         :items {:type ["string" "number"]}
                         :description "Array of strings or numbers"}
-          converted-array (schema/edn->sch array-schema)]
+          converted-array ^JsonArraySchema (schema/edn->sch array-schema)]
 
       (is (instance? JsonArraySchema converted-array))
       (is (instance? JsonAnyOfSchema (.items converted-array)))
 
-      (let [items-schema (.items converted-array)
+      (let [items-schema ^JsonAnyOfSchema (.items converted-array)
             any-of-schemas (vec (.anyOf items-schema))]
         (is (= 2 (count any-of-schemas)))
         (is (instance? JsonStringSchema (first any-of-schemas)))
@@ -315,13 +316,13 @@
       (is (= #{"op" "explanation"} (set (.required converted-schema))))
 
       ;; Check op enum
-      (let [op-schema (get properties "op")]
+      (let [op-schema ^JsonEnumSchema (get properties "op")]
         (is (instance? JsonEnumSchema op-schema))
         (is (= ["set_path" "get_path" "delete_path" "inspect"] (vec (.enumValues op-schema)))))
 
       ;; Check path array with mixed items
-      (let [path-schema (get properties "path")
-            path-items (.items path-schema)]
+      (let [path-schema ^JsonArraySchema (get properties "path")
+            path-items ^JsonAnyOfSchema (.items path-schema)]
         (is (instance? JsonArraySchema path-schema))
         (is (instance? JsonAnyOfSchema path-items))
         (let [item-schemas (vec (.anyOf path-items))]
@@ -330,7 +331,7 @@
           (is (instance? JsonNumberSchema (second item-schemas)))))
 
       ;; Check value with multiple types
-      (let [value-schema (get properties "value")]
+      (let [value-schema ^JsonAnyOfSchema (get properties "value")]
         (is (instance? JsonAnyOfSchema value-schema))
         (is (= "Value to store (for set_path)" (.description value-schema)))
         (let [value-schemas (vec (.anyOf value-schema))]
@@ -384,8 +385,8 @@
 
       (let [properties (.properties (.parameters tool-spec))
             action-schema (get properties "action")
-            target-schema (get properties "target")
-            data-schema (get properties "data")]
+            target-schema ^JsonAnyOfSchema (get properties "target")
+            data-schema ^JsonAnyOfSchema (get properties "data")]
 
         (is (instance? JsonEnumSchema action-schema))
         (is (instance? JsonAnyOfSchema target-schema))

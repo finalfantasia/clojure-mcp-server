@@ -75,6 +75,7 @@ Usage notes:
 (defmethod tool-system/execute-tool :dispatch-agent [tool {:keys [prompt]}]
   (core/dispatch-agent tool prompt))
 
-(defmethod tool-system/format-results :dispatch-agent [_ {:keys [result error] :as results}]
+(defmethod tool-system/format-results :dispatch-agent
+  [_ {:keys [result error] :as _results}]
   {:result [result]
    :error error})

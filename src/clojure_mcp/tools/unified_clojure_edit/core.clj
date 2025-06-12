@@ -3,20 +3,16 @@
    This namespace provides pattern-based form finding and editing
    without any MCP-specific code."
   (:require
+   #_[clojure-mcp.tools.form-edit.core :as form-edit]
    [clojure-mcp.sexp.match :as match]
-   [clojure-mcp.tools.form-edit.core :as form-edit]
-   [rewrite-clj.zip :as z]
    [rewrite-clj.parser :as p]
-   [rewrite-clj.node :as n]
-   [cljfmt.core :as fmt]
-   [clojure.string :as str]
-   [clojure.java.io :as io]))
+   [rewrite-clj.zip :as z]))
 
 ;; Re-export common utilities from form-edit.core
-(def format-source-string form-edit/format-source-string)
-(def load-file-content form-edit/load-file-content)
-(def save-file-content form-edit/save-file-content)
-(def zloc-offsets form-edit/zloc-offsets)
+#_(def format-source-string form-edit/format-source-string)
+#_(def load-file-content form-edit/load-file-content)
+#_(def save-file-content form-edit/save-file-content)
+#_(def zloc-offsets form-edit/zloc-offsets)
 
 (defn find-pattern-match
   "Finds a pattern match in Clojure source code.
@@ -28,8 +24,7 @@
    Returns:
    - Map with :zloc pointing to the matched form or nil if not found"
   [zloc pattern-str]
-  (let [pattern-sexpr (z/sexpr (z/of-string pattern-str))
-        source-str (z/root-string zloc)]
+  (let [pattern-sexpr (z/sexpr (z/of-string pattern-str))]
     (if-let [match-loc (match/find-match* pattern-sexpr zloc)]
       {:zloc match-loc}
       nil)))

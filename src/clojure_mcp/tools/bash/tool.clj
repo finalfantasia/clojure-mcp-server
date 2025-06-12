@@ -1,11 +1,10 @@
 (ns clojure-mcp.tools.bash.tool
   "Implementation of the bash tool using the tool-system multimethod approach."
   (:require
-   [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.config :as config]
-   [clojure-mcp.utils.valid-paths :as valid-paths]
+   [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.tools.bash.core :as core]
-   [clojure.tools.logging :as log]
+   [clojure-mcp.utils.valid-paths :as valid-paths]
    [clojure.java.io :as io]
    [clojure.string :as str]))
 
@@ -93,8 +92,7 @@ in the response to determine command success.")
         timeout_ms (assoc :timeout-ms timeout_ms)))))
 
 (defmethod tool-system/execute-tool :bash [{:keys [nrepl-client-atom]} inputs]
-  (let [{:keys [command working-directory timeout-ms]} inputs]
-    (core/execute-bash-command-nrepl nrepl-client-atom inputs)))
+  (core/execute-bash-command-nrepl nrepl-client-atom inputs))
 
 (defmethod tool-system/format-results :bash [_ result]
   (let [{:keys [stdout stderr exit-code timed-out error]} result

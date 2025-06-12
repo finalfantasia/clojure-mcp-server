@@ -1,11 +1,11 @@
 (ns clojure-mcp.main-examples.shadow-main
-  (:require 
-   [clojure-mcp.core :as core]
+  (:require
    [clojure-mcp.config :as config]
-   [clojure-mcp.nrepl :as nrepl]
-   [clojure.tools.logging :as log]
+   [clojure-mcp.core :as core]
    [clojure-mcp.main :as main]
-   [clojure-mcp.tools.eval.tool :as eval-tool]))
+   [clojure-mcp.nrepl :as nrepl]
+   [clojure-mcp.tools.eval.tool :as eval-tool]
+   [clojure.tools.logging :as log]))
 
 (def tool-name "clojurescript_eval")
 
@@ -41,7 +41,7 @@ JavaScript interop is fully supported including `js/console.log`, `js/setTimeout
     cljs-session))
 
 ;; when having a completely different connection for cljs
-(defn shadow-eval-tool-secondary-connection-tool [nrepl-client-atom {:keys [shadow-port shadow-build shadow-watch] :as config}]
+(defn shadow-eval-tool-secondary-connection-tool [nrepl-client-atom {:keys [shadow-port] :as config}]
   (let [cljs-nrepl-client-map (core/create-additional-connection nrepl-client-atom {:port shadow-port})
         cljs-nrepl-client-atom (atom cljs-nrepl-client-map)]
     (start-shadow-repl
@@ -53,7 +53,7 @@ JavaScript interop is fully supported including `js/console.log`, `js/setTimeout
         (assoc :description description))))
 
 ;; when sharing the clojure and cljs repl
-(defn shadow-eval-tool [nrepl-client-atom {:keys [shadow-build shadow-watch] :as config}]
+(defn shadow-eval-tool [nrepl-client-atom config]
   (let [cljs-session (nrepl/new-session @nrepl-client-atom)
         _ (start-shadow-repl nrepl-client-atom cljs-session config)]
     (-> (eval-tool/eval-code nrepl-client-atom {:nrepl-session cljs-session})
@@ -65,7 +65,7 @@ JavaScript interop is fully supported including `js/console.log`, `js/setTimeout
 ;; 2. or the user starts two processes one for clojure and then we connect to shadow
 ;;    as a secondary connection
 
-(defn my-tools [nrepl-client-atom {:keys [port shadow-port shadow-build shadow-watch] :as config}]
+(defn my-tools [nrepl-client-atom {:keys [port shadow-port] :as config}]
   (if (and port shadow-port (not= port shadow-port))
     (conj (main/my-tools nrepl-client-atom)
           (shadow-eval-tool-secondary-connection-tool nrepl-client-atom config))

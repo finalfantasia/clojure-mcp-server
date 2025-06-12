@@ -2,7 +2,8 @@
   "Functionality for tracking file read timestamps and checking modifications."
   (:require
    [clojure-mcp.tools.read-file.core :as core]
-   [clojure.java.io :as io]))
+   [clojure.java.io :as io])
+  (:import (java.io IOException)))
 
 (defn get-file-timestamps
   "Gets the current file timestamps map from the nrepl-client.
@@ -25,7 +26,7 @@
      (let [canonical-path (.getCanonicalPath (io/file file-path))]
        (swap! nrepl-client-atom update ::file-timestamps
               (fn [timestamps] (assoc timestamps canonical-path timestamp))))
-     (catch java.io.IOException e
+     (catch IOException _e
        ;; If we can't get canonical path, fall back to the original path
        (swap! nrepl-client-atom update ::file-timestamps
               (fn [timestamps] (assoc timestamps file-path timestamp)))))))
@@ -49,7 +50,7 @@
               current-mtime (.lastModified file)]
           (update-file-timestamp! nrepl-client-atom canonical-path current-mtime)
           true)
-        (catch java.io.IOException e
+        (catch IOException _e
           ;; If we can't get canonical path, fall back to the original path
           (let [current-mtime (.lastModified file)]
             (update-file-timestamp! nrepl-client-atom file-path current-mtime)
@@ -79,7 +80,7 @@
       (if (.exists file)
         (> (.lastModified file) last-read-time)
         true)) ; Consider non-existent files as "modified"
-    (catch java.io.IOException e
+    (catch IOException _e
       ;; If we can't get the canonical path, fall back to just checking the original path
       (let [timestamps (get-file-timestamps nrepl-client-atom)
             last-read-time (get timestamps file-path 0)
@@ -117,13 +118,13 @@
   [nrepl-client-atom]
   (keys (get-file-timestamps nrepl-client-atom)))
 
-(defn list-modified-files
-  "Returns a list of all tracked files that have been modified since last read.
+#_(defn list-modified-files
+    "Returns a list of all tracked files that have been modified since last read.
    
    Parameters:
    - nrepl-client-atom: Atom containing the nREPL client
    
    Returns a sequence of file paths for modified files."
-  [nrepl-client-atom]
-  (filter #(file-modified-since-read? nrepl-client-atom %)
-          (list-tracked-files nrepl-client-atom)))
+    [nrepl-client-atom]
+    (filter #(file-modified-since-read? nrepl-client-atom %)
+            (list-tracked-files nrepl-client-atom)))
