@@ -103,21 +103,16 @@ By default, reads up to " max-lines " lines, truncating lines longer than " max-
 (defmethod tool-system/validate-inputs :unified-read-file [{:keys [nrepl-client-atom]} inputs]
   (let [{:keys [path collapsed name_pattern content_pattern line_offset limit]} inputs
         nrepl-client @nrepl-client-atom]
-    (when-not path
+    (when (str/blank? path)
       (throw (ex-info "Missing required parameter: path" {:inputs inputs})))
 
-    (when-not (valid-paths/path-exists? path)
-      (throw
-       (ex-info (format "Invalid Path: file `%s` does not exist." path)
-                {:inputs inputs})))
-
-    (when (and name_pattern (not= name_pattern ""))
+    (when-not (str/blank? name_pattern)
       (try (re-pattern name_pattern)
            (catch Exception e
              (throw (ex-info (str "Invalid name_pattern regex: " (.getMessage e))
                              {:pattern name_pattern})))))
 
-    (when (and content_pattern (not= content_pattern ""))
+    (when-not (str/blank? content_pattern)
       (try (re-pattern content_pattern)
            (catch Exception e
              (throw (ex-info (str "Invalid content_pattern regex: " (.getMessage e))

@@ -5,6 +5,7 @@
    [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.tools.glob-files.core :as core]
    [clojure-mcp.utils.valid-paths :as valid-paths]
+   [clojure.string :as str]
    [clojure.string :as string]))
 
 ;; Factory function to create the tool configuration
@@ -43,10 +44,10 @@
         nrepl-client-map @nrepl-client-atom ; Dereference atom
         effective-path (or path (config/get-nrepl-user-dir nrepl-client-map))]
 
-    (when-not effective-path
+    (when (str/blank? effective-path)
       (throw (ex-info "No path provided and no nrepl-user-dir available" {:inputs inputs})))
 
-    (when-not pattern
+    (when (str/blank? pattern)
       (throw (ex-info "Missing required parameter: pattern" {:inputs inputs})))
 
     ;; Pass the dereferenced map to validate-path-with-client

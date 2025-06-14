@@ -3,7 +3,7 @@
             [clojure.java.io :as io]
             [clojure.string :as str]))
 
-(defn validate-path
+(defn- validate-path
   "Validates that a path is within allowed directories.
 
    Parameters:
@@ -39,6 +39,12 @@
                           (io/file cwd-file path))
           normalized-path (.getCanonicalPath abs-path-file)]
 
+      (when-not (.exists (io/file normalized-path))
+        (throw
+         (ex-info (format "Invalid Path: file `%s` does not exist." path)
+                  {:path path
+                   :normalized-path normalized-path})))
+
       ;; Check if path is within any allowed directory
       (if (or (empty? canonical-allowed-dirs) ;; If no allowed directories, accept all paths
               (some (fn [allowed-canonical]
@@ -54,9 +60,6 @@
                              " is outside the allowed directories:\n" (str/join "\n" allowed-directories))
                         {:path normalized-path
                          :allowed-dirs allowed-directories}))))))
-
-(defn path-exists? [path]
-  (.exists (io/file path)))
 
 (defn validate-path-with-client
   "Validates a path using settings from the nrepl-client.
