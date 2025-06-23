@@ -1,13 +1,12 @@
 (ns clojure-mcp.tools.file-write.tool-test
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures]]
-   [clojure-mcp.tools.file-write.tool :as file-write-tool]
-   [clojure-mcp.tools.file-write.core :as file-write-core]
-   [clojure-mcp.tools.unified-read-file.file-timestamps :as file-timestamps]
-   [clojure-mcp.config :as config] ; Added config require
+   [clojure-mcp.config :as config]
    [clojure-mcp.tool-system :as tool-system]
+   [clojure-mcp.tools.file-write.tool :as file-write-tool]
+   [clojure-mcp.tools.unified-read-file.file-timestamps :as file-timestamps]
    [clojure.java.io :as io]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing use-fixtures]]))
 
 ;; Setup test fixtures
 (def ^:dynamic *test-dir* nil)
@@ -102,17 +101,16 @@
         (is (not (:error formatted))))))
 
   (testing "Format error results"
-    (let [tool-config (file-write-tool/create-file-write-tool (atom {}))]
-
-      ;; Test formatting error
-      (let [result {:error true
-                    :message "Error writing file: Permission denied"}
-            formatted (tool-system/format-results tool-config result)]
-        (is (map? formatted))
-        (is (vector? (:result formatted)))
-        (is (= 1 (count (:result formatted))))
-        (is (str/includes? (first (:result formatted)) "Error writing file"))
-        (is (:error formatted))))))
+    (let [tool-config (file-write-tool/create-file-write-tool (atom {}))
+          ;; Test formatting error
+          result {:error true
+                  :message "Error writing file: Permission denied"}
+          formatted (tool-system/format-results tool-config result)]
+      (is (map? formatted))
+      (is (vector? (:result formatted)))
+      (is (= 1 (count (:result formatted))))
+      (is (str/includes? (first (:result formatted)) "Error writing file"))
+      (is (:error formatted)))))
 
 (deftest registration-map-test
   (testing "Registration map"

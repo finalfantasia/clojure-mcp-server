@@ -1,15 +1,14 @@
 (ns clojure-mcp.file-content
   "File content utilities for MCP, including image content creation."
-  (:require [clojure.string :as str])
-  (:import [io.modelcontextprotocol.spec
-            McpSchema$ImageContent
-            McpSchema$EmbeddedResource
+  (:import (io.modelcontextprotocol.spec
             McpSchema$BlobResourceContents
-            McpSchema$TextResourceContents]
-           [java.nio.file Path Files]
-           [java.util Base64]
-           [org.apache.tika Tika]
-           [org.apache.tika.mime MimeTypes MediaTypeRegistry MediaType]))
+            McpSchema$EmbeddedResource
+            McpSchema$ImageContent
+            McpSchema$TextResourceContents)
+           (java.nio.file Files Path)
+           (java.util Base64)
+           (org.apache.tika Tika)
+           (org.apache.tika.mime MediaType MediaTypeRegistry MimeTypes)))
 
 ;; embedded resources aren't supported by claude desktop yet but who knows
 ;; which clients are supporting this and when
@@ -62,7 +61,7 @@
     (McpSchema$EmbeddedResource. nil nil blob)))
 
 (defn file-response->file-content [{:keys [::file-response]}]
-  (let [{:keys [nio-path mime-type] :as ser-file} (serialized-file file-response)]
+  (let [{:keys [mime-type] :as ser-file} (serialized-file file-response)]
     (cond
       (text-media-type? mime-type) (text-resource-content ser-file)
       (image-media-type? mime-type) (image-content ser-file)
@@ -90,5 +89,5 @@
       file-response->file-content)
 
   (should-be-file-response? "./dev/logback.xml")
-  
+
   (text-media-type? (mime-type (str->nio-path "hello.md"))))

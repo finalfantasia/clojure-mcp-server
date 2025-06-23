@@ -2,12 +2,11 @@
   "Core implementation for the glob-files tool.
    This namespace contains the pure functionality without any MCP-specific code."
   (:require [clojure.java.io :as io]
-            [clojure.string :as str]
             [clojure.java.shell :as shell]
+            [clojure.string :as str]
             [clojure.tools.logging :as log])
   (:import
-   (java.nio.file FileVisitResult FileSystems Files Path Paths SimpleFileVisitor)
-   (java.nio.file.attribute BasicFileAttributes)))
+   (java.nio.file FileSystems FileVisitResult Files Paths SimpleFileVisitor)))
 
  ;; Cache tool availability to avoid repeated shell calls
 (def ^:private tool-availability (atom {}))
@@ -36,12 +35,12 @@
 (defn glob-with-rg
   "Uses ripgrep (rg) to find files matching glob patterns.
    Ripgrep is typically faster than find for large codebases.
-   
+
    Arguments:
    - dir: Directory to search in
    - pattern: Glob pattern (e.g. \"**/*.clj\", \"src/**/*.tsx\")
    - max-results: Maximum number of results to return
-   
+
    Returns a map with search results or error information."
   [dir pattern max-results]
   (let [start-time (System/currentTimeMillis)
@@ -49,7 +48,7 @@
         cmd-args (if (re-matches #"^\*\.[^/]+$" pattern)
                    ;; For simple *.ext patterns, limit to max-depth 1 (root level only)
                    ["rg" "--files" "--max-depth" "1" "--glob" pattern dir]
-                   ;; For other patterns, search recursively 
+                   ;; For other patterns, search recursively
                    ["rg" "--files" "--glob" pattern dir])]
     (log/debug "Using rg:" (str/join " " cmd-args))
     (let [result (shell/with-sh-dir dir
@@ -84,12 +83,12 @@
 
 (defn glob-with-find
   "Uses the Unix find command to locate files matching glob patterns.
-   
+
    Arguments:
    - dir: Directory to search in
    - pattern: Glob pattern (e.g. \"**/*.clj\", \"src/**/*.tsx\")
    - max-results: Maximum number of results to return
-   
+
    Returns a map with search results or error information."
   [dir pattern max-results]
   (let [start-time (System/currentTimeMillis)
@@ -99,7 +98,7 @@
                        (re-matches #"^\*\*/\*\.[^/]+$" pattern)
                        (str "*." (last (str/split pattern #"\.")))
 
-                       ;; Handle src/**/*.ext patterns  
+                       ;; Handle src/**/*.ext patterns
                        (re-matches #"^[^/]+/\*\*/\*\.[^/]+$" pattern)
                        (let [parts (str/split pattern #"/")]
                          (str "*." (last (str/split (last parts) #"\."))))
@@ -135,7 +134,7 @@
            :numFiles file-count
            :durationMs duration
            :truncated (> file-count max-results)})
-        ;; For invalid patterns, return empty results like NIO does  
+        ;; For invalid patterns, return empty results like NIO does
         (let [end-time (System/currentTimeMillis)]
           {:filenames []
            :numFiles 0
@@ -241,10 +240,10 @@
 
 (defn glob-files
   "Fast file pattern matching using glob patterns like **.clj or src/**/*.cljs.
-   
+
    Automatically selects the best available tool:
    - ripgrep (rg) for maximum performance when available
-   - Unix find command as fallback 
+   - Unix find command as fallback
    - Java NIO as final fallback for cross-platform compatibility
 
    Arguments:

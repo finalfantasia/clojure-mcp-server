@@ -1,10 +1,10 @@
 (ns clojure-mcp.tools.bash.config-test
   "Test for bash tool config parameter functionality"
-  (:require [clojure.test :refer :all]
-            [clojure-mcp.tools.bash.tool :as bash-tool]
+  (:require [clojure-mcp.config :as config]
+            [clojure-mcp.tool-system :as tool-system]
             [clojure-mcp.tools.bash.core :as bash-core]
-            [clojure-mcp.config :as config]
-            [clojure-mcp.tool-system :as tool-system]))
+            [clojure-mcp.tools.bash.tool :as bash-tool]
+            [clojure.test :refer [deftest is testing]]))
 
 (deftest test-bash-over-nrepl-config-default
   (testing "bash-over-nrepl defaults to true"
@@ -46,6 +46,7 @@
           client-atom-local (atom mock-client-local)]
 
       ;; Create tools
+      #_:clj-kondo/ignore
       (let [tool-nrepl (bash-tool/create-bash-tool client-atom-nrepl)
             tool-local (bash-tool/create-bash-tool client-atom-local)
             inputs {:command "echo test"

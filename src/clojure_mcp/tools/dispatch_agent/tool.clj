@@ -4,7 +4,7 @@
 
 (defn create-dispatch-agent-tool
   "Creates the dispatch agent tool configuration.
-   
+
    Args:
    - nrepl-client-atom: Required nREPL client atom
    - model: Optional pre-built langchain model to use instead of auto-detection"
@@ -17,28 +17,28 @@
 
 (defn dispatch-agent-tool
   "Returns a tool registration for the dispatch-agent tool compatible with the MCP system.
-   
+
    Usage:
-   
+
    Basic usage with auto-detected model:
    (dispatch-agent-tool nrepl-client-atom)
-   
+
    With custom model configuration:
    (dispatch-agent-tool nrepl-client-atom {:model my-custom-model})
-   
+
    Where:
    - nrepl-client-atom: Required nREPL client atom
    - config: Optional config map with keys:
      - :model - Pre-built langchain model to use instead of auto-detection
-   
+
    Examples:
    ;; Default model
    (def my-agent (dispatch-agent-tool nrepl-client-atom))
-   
+
    ;; Custom Anthropic model
    (def fast-model (-> (chain/create-anthropic-model \"claude-3-haiku-20240307\") (.build)))
    (def fast-agent (dispatch-agent-tool nrepl-client-atom {:model fast-model}))
-   
+
    ;; Custom OpenAI model
    (def reasoning-model (-> (chain/create-openai-model \"o1-preview\") (.build)))
    (def reasoning-agent (dispatch-agent-tool nrepl-client-atom {:model reasoning-model}))"
@@ -60,7 +60,7 @@
 Usage notes:
 1. Launch multiple agents concurrently whenever possible, to maximize performance; to do that, use a single message with multiple `agent` tool uses
 2. When the agent is done, it will return a single message back to you. The result returned by the agent is not visible to the user. To show the user the result, you should send a text message back to the user with a concise summary of the result.
-3. Each agent invocation is stateless. You will not be able to send additional messages to the agent, nor will the agent be able to communicate with you outside of its final report. Therefore, your prompt should contain a highly detailed task description for the agent to perform autonomously and you should specify exactly what information the agent should return back to you in its final and only message to you.
+3. Each agent invocation is stateless. You will not be able to send additional messages to the agent, nor will the agent be able to communicate with you outside its final report. Therefore, your prompt should contain a highly detailed task description for the agent to perform autonomously, and you should specify exactly what information the agent should return back to you in its final and only message to you.
 4. The agent's outputs should generally be trusted")
 
 (defmethod tool-system/tool-schema :dispatch-agent [_]
@@ -75,6 +75,7 @@ Usage notes:
 (defmethod tool-system/execute-tool :dispatch-agent [tool {:keys [prompt]}]
   (core/dispatch-agent tool prompt))
 
-(defmethod tool-system/format-results :dispatch-agent [_ {:keys [result error] :as results}]
+(defmethod tool-system/format-results :dispatch-agent
+  [_ {:keys [result error] :as _results}]
   {:result [result]
    :error error})
