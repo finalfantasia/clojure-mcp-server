@@ -2,12 +2,10 @@
   "Core implementation for the file-write tool.
    This namespace contains the pure functionality without any MCP-specific code."
   (:require
-   [clojure.java.io :as io]
-   [clojure.string :as string]
    [clojure-mcp.tools.form-edit.pipeline :as pipeline]
    [clojure-mcp.utils.diff :as diff-utils]
-   [clojure-mcp.linting :as linting]
-   [rewrite-clj.zip :as z]))
+   [clojure.java.io :as io]
+   [clojure.string :as string]))
 
 (defn is-clojure-file?
   "Check if a file is a Clojure-related file based on its extension.

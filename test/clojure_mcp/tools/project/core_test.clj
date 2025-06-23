@@ -1,17 +1,15 @@
 (ns clojure-mcp.tools.project.core-test
-  (:require [clojure.test :refer [deftest is testing]]
-            [clojure.java.io :as io]
-            [clojure.edn :as edn]
-            [clojure-mcp.tools.project.core :refer [inspect-project-code
-                                                    read-project-clj
-                                                    parse-lein-config
-                                                    extract-lein-project-info
-                                                    extract-source-paths
-                                                    extract-test-paths
-                                                    determine-project-type
-                                                    to-relative-path]])
-  (:import [java.io File]
-           [java.nio.file Files]))
+  (:require
+   [clojure-mcp.tools.project.core
+    :refer [determine-project-type
+            extract-lein-project-info
+            extract-source-paths
+            extract-test-paths
+            parse-lein-config
+            to-relative-path]]
+   [clojure.edn :as edn]
+   [clojure.java.io :as io]
+   [clojure.test :refer [deftest is testing]]))
 
 (deftest lein-project-parsing-test
   (testing "parses real Leiningen project.clj file"

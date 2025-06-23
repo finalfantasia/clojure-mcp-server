@@ -1,10 +1,12 @@
 (ns clojure-mcp.tools.grep.tool-test
-  (:require [clojure.test :refer :all]
-            [clojure-mcp.tools.grep.tool :as sut]
+  (:require [clojure-mcp.config :as config]
             [clojure-mcp.tool-system :as tool-system]
-            [clojure-mcp.config :as config] ; Added config require
+            [clojure-mcp.tools.grep.core :as grep-core]
+            [clojure-mcp.tools.grep.tool :as sut]
+            [clojure-mcp.utils.valid-paths :as valid-paths]
             [clojure.string :as str]
-            [clojure.data.json :as json]))
+            [clojure.test :refer [deftest is testing]])
+  (:import (clojure.lang ExceptionInfo)))
 
 (deftest tool-name-test
   (testing "tool-name returns the correct name"
@@ -15,7 +17,7 @@
   (testing "tool-description returns a non-empty description"
     (let [description (tool-system/tool-description {:tool-type :grep})]
       (is (string? description))
-      (is (not (empty? description))))))
+      (is (not (str/blank? description))))))
 
 (deftest tool-schema-test
   (testing "tool-schema returns a valid schema with required parameters"
@@ -36,7 +38,7 @@
       (let [tool-config {:tool-type :grep
                          :nrepl-client-atom nrepl-client-atom}]
 
-        (with-redefs [clojure-mcp.utils.valid-paths/validate-path-with-client
+        (with-redefs [valid-paths/validate-path-with-client
                       (fn [path _]
                         (str "/validated" path))]
 
@@ -60,13 +62,13 @@
                       :max-results 500} result))))
 
           (testing "missing required pattern parameter"
-            (is (thrown-with-msg? clojure.lang.ExceptionInfo
+            (is (thrown-with-msg? ExceptionInfo
                                   #"Missing required parameter: pattern"
                                   (tool-system/validate-inputs tool-config {:path "/test/path"})))))))))
 
 (deftest execute-tool-test
   (testing "execute-tool calls core function with correct parameters"
-    (with-redefs [clojure-mcp.tools.grep.core/grep-files
+    (with-redefs [grep-core/grep-files
                   (fn [path pattern & {:keys [include max-results]}]
                     {:called-with {:path path
                                    :pattern pattern

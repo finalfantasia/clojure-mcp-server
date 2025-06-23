@@ -1,7 +1,5 @@
 (ns clojure-mcp.sexp.match
-  (:require [rewrite-clj.zip :as z]
-            [rewrite-clj.node :as n]
-            [rewrite-clj.parser :as p]))
+  (:require [rewrite-clj.zip :as z]))
 
 (defn match-sexpr
   "Return true if `pattern` matches `data`. 
@@ -68,7 +66,7 @@
   (loop [loc zloc]
     (when-not (z/end? loc)
       (let [form (try (z/sexpr loc)
-                      (catch Exception e
+                      (catch Exception _e
                         ::continue))]
         (if (= ::continue form)
           (recur (z/next loc))

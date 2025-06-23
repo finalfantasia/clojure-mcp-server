@@ -2,9 +2,9 @@
   "Core implementation for the grep tool.
    This namespace contains the pure functionality without any MCP-specific code."
   (:require
-   [clojure.string :as str]
-   [clojure.java.shell :as shell]
    [clojure.java.io :as io]
+   [clojure.java.shell :as shell]
+   [clojure.string :as str]
    [clojure.tools.logging :as log]))
 
  ;; Cache tool availability to avoid repeated shell calls

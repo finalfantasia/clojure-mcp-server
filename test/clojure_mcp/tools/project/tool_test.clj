@@ -1,13 +1,12 @@
 (ns clojure-mcp.tools.project.tool-test
   (:require
-   [clojure.test :refer [deftest testing is use-fixtures]]
-   [clojure-mcp.nrepl :as nrepl]
-   [clojure-mcp.tools.project.tool :as sut]
-   [clojure-mcp.tools.project.core :as core]
-   [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.config :as config]
-   [nrepl.server :as nrepl-server]
-   [clojure-mcp.tools.test-utils :as test-utils]))
+   [clojure-mcp.nrepl :as nrepl]
+   [clojure-mcp.tool-system :as tool-system]
+   [clojure-mcp.tools.project.core :as core]
+   [clojure-mcp.tools.project.tool :as sut]
+   [clojure.test :refer [deftest is testing use-fixtures]]
+   [nrepl.server :as nrepl-server]))
 
 ;; Test fixtures
 (def ^:dynamic *nrepl-server* nil)
@@ -42,8 +41,9 @@
 (use-fixtures :once setup-nrepl-client)
 
 ;; Helper functions
-(defn make-test-tool [tool-map]
+(defn make-test-tool
   "Creates a test function that wraps the tool function with a synchronous API"
+  [tool-map]
   (fn [inputs]
     (let [prom (promise)
           tool-fn (:tool-fn tool-map)]

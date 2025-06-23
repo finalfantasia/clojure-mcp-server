@@ -1,19 +1,19 @@
 (ns clojure-mcp.tools.dispatch-agent.core
   "Core implementation for the dispatch agent tool.
    This namespace contains the pure functionality without any MCP-specific code."
-  (:require [clojure.data.json :as json]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [clojure-mcp.agent.langchain :as chain]
-            [clojure-mcp.tools.unified-read-file.tool :as read-file-tool]
-            [clojure-mcp.tools.directory-tree.tool :as directory-tree-tool]
-            [clojure-mcp.tools.grep.tool :as grep-tool]
-            [clojure-mcp.tools.glob-files.tool :as glob-files-tool]
-            [clojure-mcp.tools.project.tool :as project-tool]
-            [clojure-mcp.tools.think.tool :as think-tool]
-            #_[clojure-mcp.tools.scratch-pad.tool :as scratch-pad-tool])
+  (:require
+   #_[clojure-mcp.tools.scratch-pad.tool :as scratch-pad-tool]
+   [clojure-mcp.agent.langchain :as chain]
+   [clojure-mcp.tools.directory-tree.tool :as directory-tree-tool]
+   [clojure-mcp.tools.glob-files.tool :as glob-files-tool]
+   [clojure-mcp.tools.grep.tool :as grep-tool]
+   [clojure-mcp.tools.project.tool :as project-tool]
+   [clojure-mcp.tools.think.tool :as think-tool]
+   [clojure-mcp.tools.unified-read-file.tool :as read-file-tool]
+   [clojure.string :as string]
+   [clojure.tools.logging :as log])
   (:import
-   [clojure_mcp.agent.langchain AiService]))
+   (clojure_mcp.agent.langchain AiService)))
 
 (declare system-message)
 
@@ -109,21 +109,20 @@
         client-atom (atom {:clojure-mcp.config/config
                            {:nrepl-user-dir user-dir
                             :allowed-directories [user-dir]}})
-        ;; Use default model
-        ai-default (create-ai-service client-atom)
-        ;; Use custom model
+       ;; Use default model
+        #_#_ai-default (create-ai-service client-atom)
+       ;; Use custom model
         custom-model (->
                       (chain/create-gemini-model "gemini-2.5-flash-preview-05-20")
                       #_(chain/create-anthropic-model "claude-3-7-sonnet-20250219")
                       (.build))
         ai-custom (create-ai-service client-atom custom-model)]
 
-    ;; Test with default model
+   ;; Test with default model
     #_(.chat (:service ai-default) "find langchain integration code")
 
-    ;; Test with custom model  
-    (.chat (:service ai-custom) "find the langchain integration code"))
-  )
+   ;; Test with custom model
+    (.chat (:service ai-custom) "find the langchain integration code")))
 
 (def system-message
   "You are an agent for a Clojure Coding Assistant. Given the user's prompt, you should use the tools available to you to answer the user's question.

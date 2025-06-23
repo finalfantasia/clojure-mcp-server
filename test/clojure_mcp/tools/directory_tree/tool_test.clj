@@ -1,8 +1,12 @@
 (ns clojure-mcp.tools.directory-tree.tool-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure-mcp.config :as config]
+            [clojure-mcp.tool-system :as tool-system]
+            [clojure-mcp.tools.directory-tree.core :as directory-tree-core]
             [clojure-mcp.tools.directory-tree.tool :as sut]
-            [clojure-mcp.config :as config] ; Added config require
-            [clojure-mcp.tool-system :as tool-system]))
+            [clojure-mcp.utils.valid-paths :as valid-paths]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is testing]])
+  (:import (clojure.lang ExceptionInfo)))
 
 (deftest tool-name-test
   (testing "tool-name returns the correct name"
@@ -13,7 +17,7 @@
   (testing "tool-description returns a non-empty description"
     (let [description (tool-system/tool-description {:tool-type :directory-tree})]
       (is (string? description))
-      (is (not (empty? description))))))
+      (is (not (str/blank? description))))))
 
 (deftest tool-schema-test
   (testing "tool-schema returns a valid schema with required path parameter"
@@ -32,7 +36,7 @@
       (let [tool-config {:tool-type :directory-tree
                          :nrepl-client-atom nrepl-client-atom}]
 
-        (with-redefs [clojure-mcp.utils.valid-paths/validate-path-with-client
+        (with-redefs [valid-paths/validate-path-with-client
                       (fn [path _]
                         (str "/validated" path))]
 
@@ -46,13 +50,13 @@
                       :max_depth 3} result))))
 
           (testing "missing required path parameter"
-            (is (thrown-with-msg? clojure.lang.ExceptionInfo
+            (is (thrown-with-msg? ExceptionInfo
                                   #"Missing required parameter: path"
                                   (tool-system/validate-inputs tool-config {})))))))))
 
 (deftest execute-tool-test
   (testing "execute-tool calls core function with correct parameters"
-    (with-redefs [clojure-mcp.tools.directory-tree.core/directory-tree
+    (with-redefs [directory-tree-core/directory-tree
                   (fn [path & {:keys [max-depth]}]
                     {:called-with {:path path
                                    :max-depth max-depth}})]

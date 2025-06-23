@@ -1,70 +1,67 @@
 (ns clojure-mcp.main
-  (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]
-            [clojure.string :as str]
-            [clojure.tools.logging :as log]
-            [clojure-mcp.core :as core]
-            [clojure-mcp.nrepl :as nrepl]
-            [clojure-mcp.prompts :as prompts]
-            [clojure-mcp.tools.project.core :as project]
-            [clojure-mcp.resources :as resources]
-            [clojure-mcp.config :as config]
-            ;; tools
-            [clojure-mcp.tools.directory-tree.tool :as directory-tree-tool]
-            [clojure-mcp.tools.eval.tool :as eval-tool]
-            [clojure-mcp.tools.unified-read-file.tool :as unified-read-file-tool]
-            [clojure-mcp.tools.grep.tool :as new-grep-tool]
-            [clojure-mcp.tools.glob-files.tool :as glob-files-tool]
-            [clojure-mcp.tools.think.tool :as think-tool]
-            [clojure-mcp.tools.bash.tool :as bash-tool]
-            [clojure-mcp.tools.form-edit.combined-edit-tool :as combined-edit-tool]
-            [clojure-mcp.tools.form-edit.tool :as new-form-edit-tool]
-            [clojure-mcp.tools.file-edit.tool :as file-edit-tool]
-            [clojure-mcp.tools.file-write.tool :as file-write-tool]
-            [clojure-mcp.tools.dispatch-agent.tool :as dispatch-agent-tool]
-            [clojure-mcp.tools.architect.tool :as architect-tool]
-            [clojure-mcp.tools.code-critique.tool :as code-critique-tool]
-            [clojure-mcp.tools.project.tool :as project-tool]
-            [clojure-mcp.tools.scratch-pad.tool :as scratch-pad-tool]))
+  (:require
+   [clojure-mcp.config :as config]
+   [clojure-mcp.core :as core]
+   [clojure-mcp.prompts :as prompts]
+   [clojure-mcp.resources :as resources]
+   [clojure-mcp.tools.architect.tool :as architect-tool]
+   [clojure-mcp.tools.bash.tool :as bash-tool]
+   [clojure-mcp.tools.code-critique.tool :as code-critique-tool]
+   [clojure-mcp.tools.directory-tree.tool :as directory-tree-tool]
+   [clojure-mcp.tools.dispatch-agent.tool :as dispatch-agent-tool]
+   [clojure-mcp.tools.eval.tool :as eval-tool]
+   [clojure-mcp.tools.file-edit.tool :as file-edit-tool]
+   [clojure-mcp.tools.file-write.tool :as file-write-tool]
+   [clojure-mcp.tools.form-edit.combined-edit-tool :as combined-edit-tool]
+   [clojure-mcp.tools.form-edit.tool :as new-form-edit-tool]
+   [clojure-mcp.tools.glob-files.tool :as glob-files-tool]
+   [clojure-mcp.tools.grep.tool :as new-grep-tool]
+   [clojure-mcp.tools.project.core :as project]
+   [clojure-mcp.tools.project.tool :as project-tool]
+   [clojure-mcp.tools.scratch-pad.tool :as scratch-pad-tool]
+   [clojure-mcp.tools.think.tool :as think-tool]
+   [clojure-mcp.tools.unified-read-file.tool :as unified-read-file-tool]
+   [clojure.java.io :as io]))
 
 ;; Define the resources you want available
-(defn make-resources [nrepl-client-atom working-dir]
-  (keep
-   identity
-   [(resources/create-file-resource
-     "custom://project-summary"
-     "PROJECT_SUMMARY.md"
-     "A Clojure project summary document for the project hosting the REPL, this is intended to provide the LLM with important context to start."
-     "text/markdown"
-     (.getCanonicalPath (io/file working-dir "PROJECT_SUMMARY.md")))
-    (resources/create-file-resource
-     "custom://readme"
-     "README.md"
-     "A README document for the current Clojure project hosting the REPL"
-     "text/markdown"
-     (.getCanonicalPath (io/file working-dir "README.md")))
-    (resources/create-file-resource
-     "custom://claude"
-     "CLAUDE.md"
-     "The Claude instructions document for the current project hosting the REPL"
-     "text/markdown"
-     (.getCanonicalPath (io/file working-dir "CLAUDE.md")))
-    (resources/create-file-resource
-     "custom://llm-code-style"
-     "LLM_CODE_STYLE.md"
-     "Guidelines for writing Clojure code for the current project hosting the REPL"
-     "text/markdown"
-     (str working-dir "/LLM_CODE_STYLE.md"))
-    (let [{:keys [outputs error]} (project/inspect-project @nrepl-client-atom)]
-      (when-not error
-        (resources/create-string-resource
-         "custom://project-info"
-         "Clojure Project Info"
-         "Information about the current Clojure project structure, attached REPL environment and dependencies"
-         "text/markdown"
-         outputs)))]))
+(defn make-resources [nrepl-client-atom]
+  (let [working-dir (config/get-nrepl-user-dir @nrepl-client-atom)]
+    (keep
+     identity
+     [(resources/create-file-resource
+       "custom://project-summary"
+       "PROJECT_SUMMARY.md"
+       "A Clojure project summary document for the project hosting the REPL, this is intended to provide the LLM with important context to start."
+       "text/markdown"
+       (.getCanonicalPath (io/file working-dir "PROJECT_SUMMARY.md")))
+      (resources/create-file-resource
+       "custom://readme"
+       "README.md"
+       "A README document for the current Clojure project hosting the REPL"
+       "text/markdown"
+       (.getCanonicalPath (io/file working-dir "README.md")))
+      (resources/create-file-resource
+       "custom://claude"
+       "CLAUDE.md"
+       "The Claude instructions document for the current project hosting the REPL"
+       "text/markdown"
+       (.getCanonicalPath (io/file working-dir "CLAUDE.md")))
+      (resources/create-file-resource
+       "custom://llm-code-style"
+       "LLM_CODE_STYLE.md"
+       "Guidelines for writing Clojure code for the current project hosting the REPL"
+       "text/markdown"
+       (str working-dir "/LLM_CODE_STYLE.md"))
+      (let [{:keys [outputs error]} (project/inspect-project @nrepl-client-atom)]
+        (when-not error
+          (resources/create-string-resource
+           "custom://project-info"
+           "Clojure Project Info"
+           "Information about the current Clojure project structure, attached REPL environment and dependencies"
+           "text/markdown"
+           outputs)))])))
 
-(defn make-prompts [nrepl-client-atom working-dir]
+(defn make-prompts [nrepl-client-atom]
   [{:name "clojure_repl_system_prompt"
     :description "Provides instructions and guidelines for Clojure development, including style and best practices."
     :arguments [] ;; No arguments needed for this prompt
@@ -73,13 +70,14 @@
                 (str
                  (prompts/load-prompt-from-resource "clojure-mcp/prompts/system/clojure_repl_form_edit.md")
                  (prompts/load-prompt-from-resource "clojure-mcp/prompts/system/clojure_form_edit.md")))}
-   (prompts/create-project-summary working-dir)
+   (prompts/create-project-summary
+    (config/get-nrepl-user-dir @nrepl-client-atom))
    prompts/chat-session-summary
    prompts/resume-chat-session
    prompts/plan-and-execute
    (prompts/add-dir nrepl-client-atom)])
 
-(defn make-tools [nrepl-client-atom working-directory]
+(defn make-tools [nrepl-client-atom]
   [;; read-only tools
    (directory-tree-tool/directory-tree-tool nrepl-client-atom)
    (unified-read-file-tool/unified-read-file-tool nrepl-client-atom)
@@ -109,22 +107,8 @@
    ;; not sure how useful this is
    (architect-tool/architect-tool nrepl-client-atom)
 
-   ;; experimental 
+   ;; experimental
    (code-critique-tool/code-critique-tool nrepl-client-atom)])
-
-;; DEPRECATED but maintained for backword compatability
-(defn ^:deprecated my-prompts
-  ([working-dir]
-   (my-prompts working-dir core/nrepl-client-atom))
-  ([working-dir nrepl-client-atom]
-   (make-prompts nrepl-client-atom working-dir)))
-
-(defn ^:deprecated my-resources [nrepl-client-atom working-dir]
-  (make-resources nrepl-client-atom working-dir))
-
-(defn ^:deprecated my-tools [nrepl-client-atom]
-  (let [working-directory (config/get-nrepl-user-dir @nrepl-client-atom)]
-    (make-tools nrepl-client-atom working-directory)))
 
 (defn start-mcp-server [opts]
   (core/build-and-start-mcp-server
@@ -166,4 +150,3 @@
                            "5. Missing tests or edge cases\n\n"
                            "Please use the read_file tool to examine the code, "
                            "then provide detailed feedback.")}]})))})
-

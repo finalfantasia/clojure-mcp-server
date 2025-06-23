@@ -279,9 +279,9 @@ scratch_pad:
 ### Key Implementation Patterns
 
 1. **Factory Function Pattern**: The refactored architecture uses factory functions:
-   - `make-tools`: `(fn [nrepl-client-atom working-directory] ...)` returns seq of tools
-   - `make-prompts`: `(fn [nrepl-client-atom working-directory] ...)` returns seq of prompts
-   - `make-resources`: `(fn [nrepl-client-atom working-directory] ...)` returns seq of resources
+   - `make-tools`: `(fn [nrepl-client-atom] ...)` returns seq of tools
+   - `make-prompts`: `(fn [nrepl-client-atom] ...)` returns seq of prompts
+   - `make-resources`: `(fn [nrepl-client-atom] ...)` returns seq of resources
    - All components created through `core/build-and-start-mcp-server`
 
 2. **Multimethod Dispatch**: The tool system uses multimethods for extensibility:
@@ -403,9 +403,9 @@ The refactored architecture makes it simple to create custom MCP servers:
 ### Custom Tools Example
 
 ```clojure
-(defn make-tools [nrepl-client-atom working-directory]
+(defn make-tools [nrepl-client-atom]
   (concat
-   (main/make-tools nrepl-client-atom working-directory)
+   (main/make-tools nrepl-client-atom)
    [(my-custom-tool/create-tool nrepl-client-atom)]))
 ```
 

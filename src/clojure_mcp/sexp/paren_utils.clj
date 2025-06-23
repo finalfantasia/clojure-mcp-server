@@ -1,10 +1,10 @@
 (ns clojure-mcp.sexp.paren-utils
   (:require
    [clojure-mcp.linting :as linting]
-   [rewrite-clj.parser :as parser]
+   [clojure.string :as string]
    [rewrite-clj.node :as node]
-   [clojure.string :as string])
-  (:import [com.oakmac.parinfer Parinfer]))
+   [rewrite-clj.parser :as parser])
+  (:import (com.oakmac.parinfer Parinfer)))
 
 ;; Tokenizer that breaks code into expressions and delimiter tokens
 (defn tokenize-code
@@ -43,7 +43,7 @@
   {:pre [(= :delimiter type) (open-delim value)]}
   (update x :value delim-map))
 
-(defn open-delim? [{:keys [type value] :as x}]
+(defn open-delim? [{:keys [type value] :as _x}]
   (when (= :delimiter type)
     (open-delim value)))
 
@@ -116,20 +116,20 @@
   (let [lint-result (linting/lint-delims code-str)]
     (has-delimiter-errors? lint-result)))
 
-#_(defn smart-repair [code-str]
-    (if-let [parinfer-result (parinfer-repair code-str)]
-      (if-let [lint-result (linting/lint parinfer-result)]
-        {:repaired? true
-         :form parinfer-result
-         :message "Parenthesis repaired using parinfer"}
-        ;; Parinfer produced code with semantic issues, try homegrown approach
-        (or (repair-parens code-str)
-            ;; If homegrown fails too, return parinfer result with a warning
-            {:repaired? true
-             :form parinfer-result
-             :message "Warning: Fixed syntax but may have changed semantics"}))
-      ;; Parinfer failed (unlikely), fall back to homegrown
-      (repair-parens code-str)))
+(defn smart-repair [code-str]
+  (if-let [parinfer-result (parinfer-repair code-str)]
+    (if (linting/lint parinfer-result)
+      {:repaired? true
+       :form parinfer-result
+       :message "Parenthesis repaired using parinfer"}
+      ;; Parinfer produced code with semantic issues, try homegrown approach
+      (or (repair-parens code-str)
+          ;; If homegrown fails too, return parinfer result with a warning
+          {:repaired? true
+           :form parinfer-result
+           :message "Warning: Fixed syntax but may have changed semantics"}))
+    ;; Parinfer failed (unlikely), fall back to homegrown
+    (repair-parens code-str)))
 
 (comment
   (def code1 "(defn hello [name] (str \"Hello\" name)))")
@@ -150,21 +150,21 @@
 
   ;; Test with complex case - both extra and missing parens
   (def code3 "(defn hello [name]
-  (str \"Hello\" name))) 
-(defn world [] 
-  (println \"World\")")
+  (str \"Hello\" name)))
+  (defn world []
+    (println \"World\")")
   (tokenize-code code3)
   (fix-parens (tokenize-code code3))
   (repair-parens code3)
   (repair-parens code3)
-  ;; => {:repaired? true, :form "(defn hello [name] (str \"Hello\" name)) (defn world [] (println \"World\"))", 
+  ;; => {:repaired? true, :form "(defn hello [name] (str \"Hello\" name)) (defn world [] (println \"World\"))",
   ;;     :message "Removed 1 extra closing parentheses and added 1 missing closing parentheses"}
 
   ;; Test with parens in string
   (def code4 "(println \"Hello (world)\")")
   (tokenize-code code4)
   (fix-parens (tokenize-code code4))
-  (repair-parens code4)
+  (repair-parens code4))
 
   ;; => {:repaired? false, :form "(println \"Hello (world)\")", :message "No repair needed"}
-  )
+
