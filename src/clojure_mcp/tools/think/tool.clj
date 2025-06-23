@@ -31,7 +31,7 @@ The tool simply logs your thought process for better transparency and does not e
   ;; Return the validated inputs
   inputs)
 
-(defmethod tool-system/execute-tool :think [_ {:keys [thought]}]
+(defmethod tool-system/execute-tool :think [_tool-config _inputs]
   {:result "Your thought has been logged."
    :error false})
 

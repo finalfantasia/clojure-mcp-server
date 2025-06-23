@@ -1,13 +1,12 @@
 (ns clojure-mcp.tools.test-utils
   "Utility functions for testing the tool-system based tools."
   (:require
-   [clojure-mcp.config :as config]
    [clojure-mcp.nrepl :as nrepl]
-   [nrepl.server :as nrepl-server]
    [clojure-mcp.tool-system :as tool-system]
-   [clojure.test :refer [use-fixtures]]
+   [clojure-mcp.tools.unified-read-file.file-timestamps :as file-timestamps]
    [clojure.java.io :as io]
-   [clojure-mcp.tools.unified-read-file.file-timestamps :as file-timestamps]))
+   [clojure.test :refer [use-fixtures]]
+   [nrepl.server :as nrepl-server]))
 
 (defonce ^:dynamic *nrepl-server* nil)
 (defonce ^:dynamic *nrepl-client-atom* nil)
@@ -35,10 +34,11 @@
       #_(io/delete-file *test-file-path* true))))
 
 ;; Helper to invoke full tool function directly using the tool registration map
-(defn make-tool-tester [tool-instance]
+(defn make-tool-tester
   "Takes a tool instance and returns a function that executes the tool directly.
    The returned function takes a map of tool inputs and returns a map with:
    {:result result :error? error-flag}"
+  [tool-instance]
   (let [reg-map (tool-system/registration-map tool-instance)
         tool-fn (:tool-fn reg-map)]
     (fn [inputs]
@@ -49,9 +49,10 @@
         @prom))))
 
 ;; Helper to test individual multimethod pipeline steps
-(defn test-pipeline-steps [tool-instance inputs]
+(defn test-pipeline-steps
   "Executes the validation, execution, and formatting steps of the tool pipeline
    and returns the formatted result."
+  [tool-instance inputs]
   (let [validated (tool-system/validate-inputs tool-instance inputs)
         execution-result (tool-system/execute-tool tool-instance validated)
         formatted-result (tool-system/format-results tool-instance execution-result)]
@@ -109,6 +110,6 @@
       (doseq [file (reverse (file-seq dir))]
         (.delete file)))))
 
-(defn apply-fixtures [test-namespace]
+(defn apply-fixtures [_test-namespace]
   (use-fixtures :once test-nrepl-fixture)
   (use-fixtures :each cleanup-test-file))

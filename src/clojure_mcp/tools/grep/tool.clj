@@ -1,16 +1,16 @@
 (ns clojure-mcp.tools.grep.tool
   "Implementation of the grep tool using the tool-system multimethod approach."
   (:require
+   [clojure-mcp.config :as config]
    [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.tools.grep.core :as core]
    [clojure-mcp.utils.valid-paths :as valid-paths]
-   [clojure-mcp.config :as config] ; Added config require
    [clojure.string :as string]))
 
 ;; Factory function to create the tool configuration
 (defn create-grep-tool
   "Creates the grep tool configuration.
-   
+
    Parameters:
    - nrepl-client-atom: Atom containing the nREPL client"
   [nrepl-client-atom]
@@ -28,7 +28,7 @@
 - Filter files by pattern with the include parameter (eg. \"*.js\", \"*.{ts,tsx}\").
 - Returns matching file paths sorted by modification time.
 - Use this tool when you need to find files containing specific patterns.
-- When you are doing an open ended search that may require multiple rounds of globbing and grepping, use the `dispatch_agent` tool instead")
+- When you are doing an open-ended search that may require multiple rounds of globbing and grepping, use the `dispatch_agent` tool instead")
 
 (defmethod tool-system/tool-schema :grep [_]
   {:type :object
@@ -115,7 +115,7 @@
 ;; Backward compatibility function that returns the registration map
 (defn grep-tool
   "Returns the registration map for the grep tool.
-   
+
    Parameters:
    - nrepl-client-atom: Atom containing the nREPL client"
   [nrepl-client-atom]

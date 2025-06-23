@@ -1,8 +1,9 @@
 (ns clojure-mcp.tools.scratch-pad.tool-test
   (:require
-   [clojure.test :refer [deftest is testing]]
    [clojure-mcp.tool-system :as tool-system]
-   [clojure-mcp.tools.scratch-pad.tool :as sut]))
+   [clojure-mcp.tools.scratch-pad.tool :as sut]
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing]]))
 
 (defn create-mock-nrepl-client-atom
   "Creates a mock nrepl-client-atom for testing."
@@ -20,7 +21,7 @@
     (testing "tool-description returns a non-empty string"
       (let [description (tool-system/tool-description tool-config)]
         (is (string? description))
-        (is (not (empty? description)))
+        (is (not (str/blank? description)))
         (is (re-find #"scratch pad" description))))
 
     (testing "tool-schema returns a valid schema"
