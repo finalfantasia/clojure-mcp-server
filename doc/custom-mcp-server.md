@@ -53,17 +53,18 @@ Want to add your own documentation? Create your own `make-resources` function:
             [clojure-mcp.resources :as resources]
             [clojure.java.io :as io]))
 
-(defn make-resources [nrepl-client-atom working-dir]
+(defn make-resources [nrepl-client-atom]
   ;; Start with the default resources
   (concat
-   (main/make-resources nrepl-client-atom working-dir)
+   (main/make-resources nrepl-client-atom)
    ;; Add your custom resources
    [(resources/create-file-resource
      "custom://architecture"
      "ARCHITECTURE.md"
      "Our system architecture documentation"
      "text/markdown"
-     (.getCanonicalPath (io/file working-dir "docs/ARCHITECTURE.md")))
+     (.getCanonicalPath (io/file (config/get-nrepl-user-dir @nrepl-client-atom)
+                                 "docs/ARCHITECTURE.md")))
     
     (resources/create-string-resource
      "custom://team-standards"
@@ -99,7 +100,7 @@ Maybe you want a read-only server for safer exploration:
             [clojure-mcp.tools.eval.tool :as eval-tool]
             [clojure-mcp.tools.project.tool :as project-tool]))
 
-(defn make-read-only-tools [nrepl-client-atom working-directory]
+(defn make-read-only-tools [nrepl-client-atom]
   ;; Only include read-only and evaluation tools
   [(directory-tree-tool/directory-tree-tool nrepl-client-atom)
    (unified-read-file-tool/unified-read-file-tool nrepl-client-atom)
@@ -127,9 +128,9 @@ Have a custom tool? Add it to the mix:
             [clojure-mcp.main :as main]
             [my-company.database-tool :as db-tool]))
 
-(defn make-tools [nrepl-client-atom working-directory]
+(defn make-tools [nrepl-client-atom]
   ;; Start with main tools and add your own
-  (conj (main/make-tools nrepl-client-atom working-directory)
+  (conj (main/make-tools nrepl-client-atom)
         (db-tool/database-query-tool nrepl-client-atom)))
 
 (defn start-mcp-server [opts]
@@ -145,10 +146,10 @@ Have a custom tool? Add it to the mix:
 Add project-specific prompts to guide your AI assistant:
 
 ```clojure
-(defn make-prompts [nrepl-client-atom working-dir]
+(defn make-prompts [nrepl-client-atom]
   ;; Start with default prompts
   (concat
-   (main/make-prompts nrepl-client-atom working-dir)
+   (main/make-prompts nrepl-client-atom)
    ;; Add custom prompts
    [{:name "database-migration"
      :description "Generate database migration code"
@@ -197,8 +198,8 @@ Sometimes you need to modify existing components rather than creating new ones. 
 Tools are just maps, so you can modify them in your factory function:
 
 ```clojure
-(defn make-tools [nrepl-client-atom working-directory]
-  (let [standard-tools (main/make-tools nrepl-client-atom working-directory)]
+(defn make-tools [nrepl-client-atom]
+  (let [standard-tools (main/make-tools nrepl-client-atom)]
     ;; Find and modify specific tools
     (map (fn [tool]
            (case (:name tool)
@@ -228,10 +229,10 @@ If you're combining tools from multiple sources:
 (defn prefix-tool-names [prefix tools]
   (map #(update % :name (fn [n] (str prefix "_" n))) tools))
 
-(defn make-tools [nrepl-client-atom working-directory]
+(defn make-tools [nrepl-client-atom]
   (concat
    ;; Standard tools with prefix
-   (prefix-tool-names "core" (main/make-tools nrepl-client-atom working-directory))
+   (prefix-tool-names "core" (main/make-tools nrepl-client-atom))
    
    ;; Your custom tools with different prefix
    (prefix-tool-names "custom" 
@@ -256,8 +257,8 @@ Here's how to selectively modify components while keeping what you want:
             #(str "⚠️ CAUTION: This modifies files! " %))
     tool))
 
-(defn make-tools [nrepl-client-atom working-directory]
-  (->> (main/make-tools nrepl-client-atom working-directory)
+(defn make-tools [nrepl-client-atom]
+  (->> (main/make-tools nrepl-client-atom)
        ;; Remove tools we don't want
        (remove #(= (:name %) "bash"))  ; Too dangerous
        ;; Modify remaining tools
@@ -268,8 +269,8 @@ Here's how to selectively modify components while keeping what you want:
                 "think" (assoc tool :name "reflect")  ; Avoid conflict with other system
                 tool)))))
 
-(defn make-resources [nrepl-client-atom working-dir]
-  (let [standard-resources (main/make-resources nrepl-client-atom working-dir)]
+(defn make-resources [nrepl-client-atom]
+  (let [standard-resources (main/make-resources nrepl-client-atom)]
     (concat
      ;; Modify existing resources
      (map (fn [resource]
@@ -290,7 +291,7 @@ Here's how to selectively modify components while keeping what you want:
        "RUNBOOK.md"
        "Emergency procedures and runbook"
        "text/markdown"
-       (str working-dir "/docs/RUNBOOK.md"))])))
+       (str (config/get-nrepl-user-dir @nrepl-client-atom) "/docs/RUNBOOK.md"))])))
 
 (defn start-mcp-server [opts]
   (core/build-and-start-mcp-server
@@ -314,18 +315,18 @@ Here's how the Shadow-cljs example extends the main server:
 
 ;; ... shadow-specific tool implementation ...
 
-(defn make-tools [nrepl-client-atom working-directory & [{:keys [port shadow-port shadow-build shadow-watch] :as config}]]
+(defn make-tools [nrepl-client-atom & [{:keys [port shadow-port shadow-build shadow-watch] :as config}]]
   (if (and port shadow-port (not= port shadow-port))
-    (conj (main/make-tools nrepl-client-atom working-directory)
+    (conj (main/make-tools nrepl-client-atom)
           (shadow-eval-tool-secondary-connection-tool nrepl-client-atom config))
-    (conj (main/make-tools nrepl-client-atom working-directory)
+    (conj (main/make-tools nrepl-client-atom)
           (shadow-eval-tool nrepl-client-atom config))))
 
 (defn start-mcp-server [opts]
   (core/build-and-start-mcp-server
    opts
-   {:make-tools-fn (fn [nrepl-client-atom working-directory]
-                     (make-tools nrepl-client-atom working-directory opts))
+   {:make-tools-fn (fn [nrepl-client-atom]
+                     (make-tools nrepl-client-atom opts))
     :make-prompts-fn main/make-prompts
     :make-resources-fn main/make-resources}))
 ```
@@ -348,21 +349,22 @@ Here's a full template you can use as a starting point:
 
 (defn make-resources
   "Custom resources including our team documentation"
-  [nrepl-client-atom working-dir]
+  [nrepl-client-atom]
   (concat
    ;; Include some defaults
-   [(first (main/make-resources nrepl-client-atom working-dir))] ; PROJECT_SUMMARY
+   [(first (main/make-resources nrepl-client-atom))] ; PROJECT_SUMMARY
    ;; Add our custom resources
    [(resources/create-file-resource
      "custom://style-guide"
      "STYLE_GUIDE.md"
      "Our comprehensive Clojure style guide"
      "text/markdown"
-     (.getCanonicalPath (io/file working-dir "docs/STYLE_GUIDE.md")))]))
+     (.getCanonicalPath (io/file (config/get-nrepl-user-dir @nrepl-client-atom)
+                                 "docs/STYLE_GUIDE.md")))]))
 
 (defn make-prompts
   "Custom prompts for our workflow"
-  [nrepl-client-atom working-dir]
+  [_nrepl-client-atom]
   [{:name "pr-review"
     :description "Review code changes for a pull request"
     :arguments []
@@ -376,7 +378,7 @@ Here's a full template you can use as a starting point:
 
 (defn make-tools
   "Curated tool selection for our team"
-  [nrepl-client-atom working-directory]
+  [nrepl-client-atom]
   ;; Mix and match from main tools or add your own
   [(eval-tool/eval-code nrepl-client-atom)
    (read-tool/unified-read-file-tool nrepl-client-atom)
@@ -414,18 +416,18 @@ Point your deps.edn to your custom server:
 3. **Document Your Choices**: Comment why you included/excluded specific tools
 4. **Version Control**: Keep your custom server in version control
 5. **Team Sharing**: Share your server configuration with your team
-6. **Factory Function Signatures**: Always use `[nrepl-client-atom working-directory]` for your factory functions
+6. **Factory Function Signatures**: Always use `[nrepl-client-atom]` for your factory functions
 
 ## Common Patterns
 
 ### Development vs Production Servers
 
 ```clojure
-(defn make-dev-tools [nrepl-client-atom working-directory]
+(defn make-dev-tools [nrepl-client-atom]
   ;; All tools including editing
-  (main/make-tools nrepl-client-atom working-directory))
+  (main/make-tools nrepl-client-atom))
 
-(defn make-prod-tools [nrepl-client-atom working-directory]
+(defn make-prod-tools [nrepl-client-atom]
   ;; Read-only tools for production debugging
   [(read-tool/unified-read-file-tool nrepl-client-atom)
    (eval-tool/eval-code nrepl-client-atom)])
@@ -442,17 +444,17 @@ Point your deps.edn to your custom server:
 ### Project-Type Specific Servers
 
 ```clojure
-(defn make-web-app-tools [nrepl-client-atom working-directory]
+(defn make-web-app-tools [nrepl-client-atom]
   ;; Tools for web development
   (concat
-   (main/make-tools nrepl-client-atom working-directory)
+   (main/make-tools nrepl-client-atom)
    [(http-tool/http-client-tool nrepl-client-atom)]))
 
-(defn make-library-tools [nrepl-client-atom working-directory]
+(defn make-library-tools [nrepl-client-atom]
   ;; Tools for library development - focus on docs and API design
   (concat
    [(doc-tool/documentation-tool nrepl-client-atom)]
-   (main/make-tools nrepl-client-atom working-directory)))
+   (main/make-tools nrepl-client-atom)))
 ```
 
 ### Using Alternative Transports

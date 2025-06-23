@@ -1,11 +1,11 @@
 (ns clojure-mcp.main-examples.figwheel-main
   "Example of a custom MCP server that adds ClojureScript evaluation via Figwheel Main.
-   
+
    This demonstrates the new pattern for creating custom MCP servers:
    1. Define a make-tools function that extends the base tools
    2. Call core/build-and-start-mcp-server with factory functions
    3. Reuse the standard make-prompts and make-resources from main
-   
+
    Note: Piggieback must be configured in your nREPL middleware for this to work.
    See the comments below for the required deps.edn configuration."
   (:require
@@ -31,14 +31,14 @@
 ;;                   :main-opts ["-m" "nrepl.cmdline" "--port" "7888"
 ;;                               "--middleware" "[cider.piggieback/wrap-cljs-repl]"]}}
 
-(defn make-tools [nrepl-client-atom working-directory & [{figwheel-build :figwheel-build}]]
-  (conj (main/make-tools nrepl-client-atom working-directory)
+(defn make-tools [nrepl-client-atom & [{figwheel-build :figwheel-build}]]
+  (conj (main/make-tools nrepl-client-atom)
         (figwheel-tool/figwheel-eval nrepl-client-atom {:figwheel-build (or figwheel-build "dev")})))
 
 (defn start-mcp-server [opts]
   (core/build-and-start-mcp-server
    opts
-   {:make-tools-fn (fn [nrepl-client-atom working-directory]
-                     (make-tools nrepl-client-atom working-directory opts))
+   {:make-tools-fn (fn [nrepl-client-atom]
+                     (make-tools nrepl-client-atom opts))
     :make-prompts-fn main/make-prompts
     :make-resources-fn main/make-resources}))

@@ -1,24 +1,22 @@
 (ns clojure-mcp.tools.bash.tool
   "Implementation of the bash tool using the tool-system multimethod approach."
   (:require
-   [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.config :as config]
-   [clojure-mcp.utils.valid-paths :as valid-paths]
+   [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.tools.bash.core :as core]
-   [clojure.tools.logging :as log]
+   [clojure-mcp.utils.valid-paths :as valid-paths]
    [clojure.java.io :as io]
    [clojure.string :as str]))
 
 ;; Factory function to create the tool configuration
 (defn create-bash-tool
   "Creates the bash tool configuration.
-   
+
    Parameters:
    - nrepl-client-atom: Atom containing the nREPL client"
   [nrepl-client-atom]
   {:tool-type :bash
-   :nrepl-client-atom nrepl-client-atom
-   :working-dir (config/get-nrepl-user-dir @nrepl-client-atom)})
+   :nrepl-client-atom nrepl-client-atom})
 
 ;; Implement the required multimethods for the bash tool
 (defmethod tool-system/tool-name :bash [_]
@@ -32,9 +30,9 @@ Examples:
 2. Find text in files: bash(command: \"grep -r 'pattern' /path/to/search\")
 3. With working directory: bash(command: \"ls -la\", working_directory: \"/tmp\")
 4. With timeout: bash(command: \"sleep 10\", timeout_ms: 5000)
-5. Git commands 
+5. Git commands
 
-For long running processes like running tests increase the timeout_ms so that the process can complete.
+For long-running processes like running tests increase the timeout_ms so that the process can complete.
 
 Note: Non-zero exit codes are NOT treated as tool errors - check exit_code
 in the response to determine command success.")
@@ -49,10 +47,11 @@ in the response to determine command success.")
                              :description "Maximum execution time in milliseconds (optional, default: 30000)"}}
    :required [:command]})
 
-(defmethod tool-system/validate-inputs :bash [{:keys [nrepl-client-atom working-dir]} inputs]
+(defmethod tool-system/validate-inputs :bash [{:keys [nrepl-client-atom]} inputs]
   (let [{:keys [command working_directory timeout_ms]} inputs
         nrepl-client @nrepl-client-atom
-        working_directory (or working_directory working-dir)]
+        working_directory (or working_directory
+                              (config/get-nrepl-user-dir @nrepl-client-atom))]
     ;; Validate required parameters
     (when-not command
       (throw (ex-info "Missing required parameter: command"
@@ -93,15 +92,14 @@ in the response to determine command success.")
         timeout_ms (assoc :timeout-ms timeout_ms)))))
 
 (defmethod tool-system/execute-tool :bash [{:keys [nrepl-client-atom]} inputs]
-  (let [{:keys [command working-directory timeout-ms]} inputs]
-    (core/execute-bash-command-nrepl nrepl-client-atom inputs)))
+  (core/execute-bash-command-nrepl nrepl-client-atom inputs))
 
 (defmethod tool-system/format-results :bash [_ result]
   (let [{:keys [stdout stderr exit-code timed-out error]} result
         formatted-output (cond-> []
                            error (conj (str "Error: " error))
                            :always (conj (str "Exit code: " exit-code
-                                              (when timed-out " (operation timed out, if this is a long running process like tests increase the timeout_ms)")))
+                                              (when timed-out " (operation timed out, if this is a long-running process like tests increase the timeout_ms)")))
                            (not (str/blank? stdout)) (conj (str "Standard output:\n" stdout))
                            (not (str/blank? stderr)) (conj (str "Standard error:\n" stderr)))]
 
@@ -113,7 +111,7 @@ in the response to determine command success.")
 ;; Backward compatibility function that returns the registration map
 (defn bash-tool
   "Returns the registration map for the bash tool.
-   
+
    Parameters:
    - nrepl-client-atom: Atom containing the nREPL client"
   [nrepl-client-atom]

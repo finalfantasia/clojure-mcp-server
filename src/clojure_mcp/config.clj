@@ -1,8 +1,8 @@
 (ns clojure-mcp.config
   (:require
-   [clojure.java.io :as io]
    [clojure-mcp.nrepl :as nrepl]
    [clojure.edn :as edn]
+   [clojure.java.io :as io]
    [clojure.tools.logging :as log]))
 
 (defn- relative-to [dir path]
@@ -12,10 +12,11 @@
         (.getCanonicalPath f)
         (.getCanonicalPath (io/file dir path))))
     (catch Exception e
-      (log/warn "Bad file paths " (pr-str [dir path]))
+      (log/warn e "Bad file paths " (pr-str [dir path]))
       nil)))
 
-(defn process-remote-config [{:keys [allowed-directories emacs-notify write-file-guard cljfmt] :as config} user-dir]
+(defn process-remote-config
+  [{:keys [allowed-directories emacs-notify write-file-guard cljfmt] :as config} user-dir]
   (let [ud (io/file user-dir)]
     (assert (and (.isAbsolute ud) (.isDirectory ud)))
     (when (some? write-file-guard)
@@ -33,10 +34,10 @@
                   (keep #(relative-to user-dir %))
                   distinct
                   vec))
-      (some? (:emacs-notify config))
-      (assoc :emacs-notify (boolean (:emacs-notify config)))
-      (some? (:cljfmt config))
-      (assoc :cljfmt (boolean (:cljfmt config))))))
+      (some? emacs-notify)
+      (assoc :emacs-notify (boolean emacs-notify))
+      (some? cljfmt)
+      (assoc :cljfmt (boolean cljfmt)))))
 
 (defn load-remote-config [nrepl-client user-dir]
   (let [remote-cfg-str

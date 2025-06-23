@@ -1,11 +1,12 @@
 (ns clojure-mcp.tools.file-edit.tool-test
-  (:require [clojure.test :refer :all]
-            [clojure-mcp.tools.file-edit.tool :as tool]
+  (:require [clojure-mcp.config :as config]
             [clojure-mcp.tool-system :as tool-system]
+            [clojure-mcp.tools.file-edit.tool :as tool]
             [clojure-mcp.tools.unified-read-file.file-timestamps :as file-timestamps]
-            [clojure-mcp.config :as config] ; Added config require
             [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is testing use-fixtures]])
+  (:import (clojure.lang ExceptionInfo)))
 
 ;; Create a real nREPL client atom with paths set to the project directory
 (def project-dir (System/getProperty "user.dir"))
@@ -139,7 +140,7 @@
                   :new_string new-content}]
 
       ;; Validation should catch the empty old_string and throw an exception
-      (is (thrown-with-msg? clojure.lang.ExceptionInfo
+      (is (thrown-with-msg? ExceptionInfo
                             #"Empty old_string is not supported"
                             (tool-system/validate-inputs tool-config inputs))
           "Should reject empty old_string during validation")))
@@ -180,7 +181,7 @@
                   :new_string new-content}]
 
       ;; Validation should reject empty old_string
-      (is (thrown-with-msg? clojure.lang.ExceptionInfo
+      (is (thrown-with-msg? ExceptionInfo
                             #"Empty old_string is not supported"
                             (tool-system/validate-inputs tool-config inputs))
           "Should reject empty old_string during validation")))
@@ -197,7 +198,7 @@
                   :new_string new-content}]
 
       ;; Validation should reject empty old_string
-      (is (thrown-with-msg? clojure.lang.ExceptionInfo
+      (is (thrown-with-msg? ExceptionInfo
                             #"Empty old_string is not supported"
                             (tool-system/validate-inputs tool-config inputs))
           "Should reject empty old_string during validation")))
@@ -212,17 +213,16 @@
           tool-config (tool/create-file-edit-tool test-client-atom)
           inputs {:file_path dupe-file-path
                   :old_string "Duplicate line"
-                  :new_string "Modified line"}]
+                  :new_string "Modified line"}
 
-      ;; Validation should pass since we don't check uniqueness until execution
-      (let [validated-inputs (tool-system/validate-inputs tool-config inputs)
-            result (tool-system/execute-tool tool-config validated-inputs)
-            formatted-result (tool-system/format-results tool-config result)]
-
-        ;; Verify the error is reported
-        (is (:error formatted-result) "Should report an error for non-unique match")
-        (is (str/includes? (first (:result formatted-result)) "matches")
-            "Error message should mention multiple matches"))))
+          ;; Validation should pass since we don't check uniqueness until execution
+          validated-inputs (tool-system/validate-inputs tool-config inputs)
+          result (tool-system/execute-tool tool-config validated-inputs)
+          formatted-result (tool-system/format-results tool-config result)]
+      ;; Verify the error is reported
+      (is (:error formatted-result) "Should report an error for non-unique match")
+      (is (str/includes? (first (:result formatted-result)) "matches")
+          "Error message should mention multiple matches")))
 
   (testing "Error case: file doesn't exist"
     (let [tool-config (tool/create-file-edit-tool test-client-atom)

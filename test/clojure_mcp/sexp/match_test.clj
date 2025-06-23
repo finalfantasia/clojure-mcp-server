@@ -1,6 +1,6 @@
 (ns clojure-mcp.sexp.match-test
-  (:require [clojure.test :refer :all]
-            [clojure-mcp.sexp.match :as match]))
+  (:require [clojure-mcp.sexp.match :as match]
+            [clojure.test :refer [deftest is testing]]))
 
 (deftest test-match-sexpr-basics
   (testing "Basic equality matches"

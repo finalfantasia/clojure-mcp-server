@@ -3,14 +3,15 @@
    This namespace contains the pure functionality without any MCP-specific code."
   (:require
    [clojure.java.io :as io]
-   [clojure.string :as str]))
+   [clojure.string :as str])
+  (:import (java.util.regex Pattern)))
 
 (defn load-file-content
   "Load file content from a path.
-   
+
    Parameters:
    - path: Path to the file to load
-   
+
    Returns a map with:
    - :content - The file contents as a string
    - :error - Boolean indicating if an error occurred
@@ -32,7 +33,7 @@
   [string substring]
   (if (empty? substring)
     0
-    (count (re-seq (re-pattern (java.util.regex.Pattern/quote substring)) string))))
+    (count (re-seq (re-pattern (Pattern/quote substring)) string))))
 
 (defn suggest-similar-file
   "Try to find a similar file with a different extension.
@@ -52,13 +53,13 @@
 
 (defn validate-file-edit
   "Validate a file edit operation.
-   
+
    Parameters:
    - file-path: The path to the file
    - old-string: The string to replace
    - new-string: The replacement string
    - file-content: The current file content (or nil if file doesn't exist)
-   
+
    Returns a map with:
    - :valid - Boolean indicating if the edit is valid
    - :message - Error message (only present when :valid is false)"
@@ -101,25 +102,24 @@
 
 (defn perform-file-edit
   "Perform the actual file edit operation.
-   
+
    Parameters:
-   - file-path: The path to the file
    - old-string: The string to replace
    - new-string: The replacement string
    - file-content: The current file content
-   
+
    Returns the new file content."
-  [file-path old-string new-string file-content]
+  [old-string new-string file-content]
   ;; Edit existing file
   (str/replace-first file-content old-string new-string))
 
 (defn save-file-content
   "Save content to a file, creating parent directories if needed.
-   
+
    Parameters:
    - file-path: Path to the file to save
    - content: Content to save
-   
+
    Returns a map with:
    - :success - Boolean indicating if the save was successful
    - :message - Error message (only when :success is false)"
@@ -154,7 +154,7 @@
   (validate-file-edit test-file "" "New content" (slurp test-file))
 
   ;; Test editing
-  (perform-file-edit test-file "Line 3" "Line 3 - EDITED" (slurp test-file))
+  (perform-file-edit "Line 3" "Line 3 - EDITED" (slurp test-file))
 
   ;; Clean up
   (.delete (io/file test-file)))

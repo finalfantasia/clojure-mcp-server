@@ -2,24 +2,24 @@
   "Core functionality for project inspection and analysis.
    This namespace provides the implementation details for analyzing project structure."
   (:require
+   [clojure-mcp.config :as config]
+   [clojure-mcp.nrepl :as nrepl]
+   [clojure-mcp.tools.glob-files.core :as glob]
    [clojure.edn :as edn]
    [clojure.java.io :as io]
    [clojure.string :as str]
-   [clojure-mcp.nrepl :as mcp-nrepl]
-   [clojure-mcp.config :as config]
-   [clojure-mcp.tools.glob-files.core :as glob]
    [clojure.tools.logging :as log])
-  (:import [java.io File]
-           [java.nio.file Paths]))
+  (:import (java.io File)
+           (java.nio.file Paths)))
 
 (defn to-relative-path
   "Converts an absolute file path to a relative path from the working directory.
    Uses Java NIO Path utilities for proper path handling.
-   
+
    Arguments:
    - working-dir: The base directory (working directory)
    - file-path: The absolute file path to make relative
-   
+
    Returns the relative path as a string, or the original path if relativization fails."
   [working-dir file-path]
   (try
@@ -50,7 +50,7 @@
   "Safely reads and parses deps.edn from the working directory.
    Returns the parsed EDN data or nil if file doesn't exist or parsing fails."
   [working-dir]
-  (let [deps-file (File. working-dir "deps.edn")]
+  (let [deps-file (^[String String] File/new working-dir "deps.edn")]
     (when (.exists deps-file)
       (try
         (-> deps-file slurp edn/read-string)
@@ -62,7 +62,7 @@
   "Safely reads and parses project.clj from the working directory.
    Returns the parsed Clojure data or nil if file doesn't exist or parsing fails."
   [working-dir]
-  (let [project-file (File. working-dir "project.clj")]
+  (let [project-file (^[String String] File/new working-dir "project.clj")]
     (when (.exists project-file)
       (try
         (-> project-file slurp read-string)
@@ -177,22 +177,24 @@
             all-paths (concat source-paths test-paths)
             all-paths (map #(str (io/file working-dir %)) all-paths)
             ;; Collect source files locally using glob-files
-            source-files (->> (mapcat (fn [path]
-                                        (let [clj-files (glob/glob-files path "**/*.clj" :max-results 1000)
-                                              cljs-files (glob/glob-files path "**/*.cljs" :max-results 1000)
-                                              cljc-files (glob/glob-files path "**/*.cljc" :max-results 1000)
-                                              bb-files (glob/glob-files path "**/*.bb" :max-results 1000)
-                                              edn-files (glob/glob-files path "**/*.edn" :max-results 1000)]
-                                          (concat (or (:filenames clj-files) [])
-                                                  (or (:filenames cljs-files) [])
-                                                  (or (:filenames cljc-files) [])
-                                                  (or (:filenames bb-files) [])
-                                                  (or (:filenames edn-files) []))))
-                                      all-paths)
-                              ;; Convert absolute paths to relative paths
-                              (map #(to-relative-path working-dir %))
-                              ;; Sort alphabetically for better browsability
-                              sort)]
+            source-files
+            (->> (mapcat
+                  (fn [path]
+                    (let [clj-files (glob/glob-files path "**/*.clj" :max-results 1000)
+                          cljs-files (glob/glob-files path "**/*.cljs" :max-results 1000)
+                          cljc-files (glob/glob-files path "**/*.cljc" :max-results 1000)
+                          bb-files (glob/glob-files path "**/*.bb" :max-results 1000)
+                          edn-files (glob/glob-files path "**/*.edn" :max-results 1000)]
+                      (concat (or (:filenames clj-files) [])
+                              (or (:filenames cljs-files) [])
+                              (or (:filenames cljc-files) [])
+                              (or (:filenames bb-files) [])
+                              (or (:filenames edn-files) []))))
+                  all-paths)
+                 ;; Convert absolute paths to relative paths
+                 (map #(to-relative-path working-dir %))
+                 ;; Sort alphabetically for better browsability
+                 sort)]
         (with-out-str
           (println "\nClojure Project Information:")
           (println "==============================")
@@ -242,25 +244,28 @@
 
           (let [limit 50
                 ;; Process raw file paths into proper namespace names
-                processed-namespaces (->> source-files
-                                          (filter #(or (.endsWith % ".clj")
-                                                       (.endsWith % ".cljs")
-                                                       (.endsWith % ".cljc")))
-                                          (map (fn [file-path]
-                                                 ;; Remove source path prefix from file path
-                                                 (let [relative-path (reduce (fn [path src-path]
-                                                                               (if (.startsWith path (str src-path "/"))
-                                                                                 (.substring path (inc (count src-path)))
-                                                                                 path))
-                                                                             file-path
-                                                                             all-paths)]
-                                                   (-> relative-path
-                                                       (.replace "/" ".")
-                                                       (.replace "_" "-")
-                                                       (str/replace #"\.(clj|cljs|cljc)$" "")))))
-                                          ;; Sort namespaces alphabetically
-                                          sort
-                                          (into []))]
+                processed-namespaces
+                (->> source-files
+                     (filter #(or (.endsWith % ".clj")
+                                  (.endsWith % ".cljs")
+                                  (.endsWith % ".cljc")))
+                     (map (fn [file-path]
+                            ;; Remove source path prefix from file path
+                            (let [relative-path
+                                  (reduce
+                                   (fn [path src-path]
+                                     (if (.startsWith path (str src-path "/"))
+                                       (.substring path (inc (count src-path)))
+                                       path))
+                                   file-path
+                                   all-paths)]
+                              (-> relative-path
+                                  (.replace "/" ".")
+                                  (.replace "_" "-")
+                                  (str/replace #"\.(clj|cljs|cljc)$" "")))))
+                     ;; Sort namespaces alphabetically
+                     sort
+                     (into []))]
             (println "\nNamespaces (" (count processed-namespaces) "):")
             (doseq [ns-name (take limit processed-namespaces)]
               (println "•" ns-name))
@@ -286,7 +291,7 @@
         result-promise (promise)
         allowed-directories (config/get-allowed-directories nrepl-client)]
     (try
-      (let [runtime-result (mcp-nrepl/tool-eval-code nrepl-client runtime-code)]
+      (let [runtime-result (nrepl/tool-eval-code nrepl-client runtime-code)]
         (if (or (nil? runtime-result) (.startsWith runtime-result "Error"))
           (deliver result-promise
                    {:outputs [(or runtime-result "Error during runtime info gathering")]
@@ -303,7 +308,6 @@
 
 (comment
   ;; Test the project inspection in the REPL
-  (require '[clojure-mcp.nrepl :as nrepl])
   (def client (nrepl/create {:port 7888}))
   (nrepl/start-polling client)
 
