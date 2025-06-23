@@ -1,7 +1,6 @@
 (ns clojure-mcp.tools.eval.tool
   "Implementation of the eval tool using the tool-system multimethod approach."
   (:require
-   [clojure.string :as string]
    [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.tools.eval.core :as core]))
 
@@ -10,7 +9,7 @@
   "Creates the evaluation tool configuration"
   ([nrepl-client-atom]
    (create-eval-tool nrepl-client-atom {}))
-  ([nrepl-client-atom {:keys [nrepl-session] :as config}]
+  ([nrepl-client-atom {:keys [nrepl-session] :as _config}]
    (cond-> {:tool-type ::clojure-eval
             :nrepl-client-atom nrepl-client-atom
             :timeout 20000}
@@ -73,7 +72,8 @@ Examples:
                                                   session (assoc :session session)
                                                   (nil? timeout_ms) (assoc :timeout_ms timeout))))
 
-(defmethod tool-system/format-results ::clojure-eval [_ {:keys [outputs error repaired] :as eval-result}]
+(defmethod tool-system/format-results ::clojure-eval
+  [_ {:keys [outputs error repaired] :as _eval-result}]
   ;; The core implementation now returns a map with :outputs (raw outputs), :error (boolean), and :repaired (boolean)
   ;; We need to format the outputs and return a map with :result, :error, and :repaired
   {:result (core/partition-and-format-outputs outputs)

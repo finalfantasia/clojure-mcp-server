@@ -1,9 +1,9 @@
 (ns clojure-mcp.tools.glob-files.tool-test
-  (:require [clojure.test :refer :all]
-            [clojure-mcp.tools.glob-files.tool :as sut]
+  (:require [clojure-mcp.config :as config]
             [clojure-mcp.tool-system :as tool-system]
-            [clojure-mcp.config :as config] ; Added config require
-            [clojure.string :as str]))
+            [clojure-mcp.tools.glob-files.tool :as sut]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is testing]]))
 
 (defn create-test-client
   "Creates a test client with the required settings"

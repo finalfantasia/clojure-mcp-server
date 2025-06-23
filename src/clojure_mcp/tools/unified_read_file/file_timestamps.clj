@@ -14,7 +14,7 @@
 (defn update-file-timestamp!
   "Updates the timestamp for a file in the nrepl-client-atom.
    Uses canonical paths to ensure consistent file identification.
-   
+
    Parameters:
    - nrepl-client-atom: Atom containing the nREPL client
    - file-path: Path to the file
@@ -36,11 +36,11 @@
    Uses canonical paths to ensure consistent file identification.
    This is useful after writing to a file to ensure the timestamp
    matches exactly what the filesystem reports.
-   
+
    Parameters:
    - nrepl-client-atom: Atom containing the nREPL client
    - file-path: Path to the file
-   
+
    Returns true if successful, false if the file doesn't exist."
   [nrepl-client-atom file-path]
   (log/debug "Updating timestamp to current mtime for file:" file-path)
@@ -57,11 +57,11 @@
 (defn file-modified-since-read?
   "Checks if a file has been modified since it was last read.
    Uses canonical paths to ensure consistent file identification.
-   
+
    Parameters:
    - nrepl-client-atom: Atom containing the nREPL client
    - file-path: Path to the file
-   
+
    Returns:
    - true if the file has been modified since last read or was never read
    - false if the file hasn't been modified since last read"
@@ -84,14 +84,14 @@
 (defn read-file-with-timestamp
   "Reads a file and updates the timestamp in the nrepl-client-atom if provided.
    Uses canonical paths to ensure consistent file identification.
-   
+
    Parameters:
    - nrepl-client-atom: Atom containing the nREPL client (can be nil)
    - path: Path to the file
    - offset: Line number to start reading from (0-indexed, default 0)
    - limit: Maximum number of lines to read (default 2000)
    - max-line-length: Maximum length per line before truncation (default 1000)
-   
+
    Returns the result from core/read-file and updates the timestamp if nrepl-client-atom is provided."
   [nrepl-client-atom path offset limit & {:keys [max-line-length] :or {max-line-length 1000}}]
   (log/debug "Reading file with timestamp:" path "offset:" offset "limit:" limit)
@@ -106,21 +106,21 @@
 
 (defn list-tracked-files
   "Returns a list of all files that have timestamps recorded.
-   
+
    Parameters:
    - nrepl-client-atom: Atom containing the nREPL client
-   
+
    Returns a sequence of file paths."
   [nrepl-client-atom]
   (keys (get-file-timestamps nrepl-client-atom)))
 
 (defn list-modified-files
   "Returns a list of all tracked files that have been modified since last read.
-   
+
    Parameters:
    - nrepl-client-atom: Atom containing the nREPL client
-   
-   Returns a sequence of foile paths for modified files."
+
+   Returns a sequence of file paths for modified files."
   [nrepl-client-atom]
   (let [tracked-files (list-tracked-files nrepl-client-atom)]
     (filter #(file-modified-since-read? nrepl-client-atom %)

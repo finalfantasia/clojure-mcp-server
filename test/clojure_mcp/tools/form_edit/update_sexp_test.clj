@@ -33,8 +33,9 @@
 (defn get-file-path []
   (.getCanonicalPath @*test-file*))
 
-(defn register-file-timestamp []
+(defn register-file-timestamp
   "Updates the timestamp for the test file to mark it as read."
+  []
   (let [file-path (get-file-path)]
     (file-timestamps/update-file-timestamp-to-current-mtime! *client-atom* file-path)
     ;; Small delay to ensure timestamps differ if modified
@@ -195,14 +196,14 @@
                   :match_form "(+ x 1)"
                   :new_form ""
                   :operation "insert_before"
-                  :replace_all false}]
-      ;; Empty new_form with insert operations should be a no-op
-      (let [validated (tool-system/validate-inputs sexp-tool inputs)
-            result (tool-system/execute-tool sexp-tool validated)
-            formatted (tool-system/format-results sexp-tool result)
-            file-content (slurp (get-file-path))]
-        (is (true? (:error formatted)) "Should indicate error for no match")
-        (is (str/includes? file-content "(+ x 1)") "Original content should be unchanged"))))
+                  :replace_all false}
+          validated (tool-system/validate-inputs sexp-tool inputs)
+          result (tool-system/execute-tool sexp-tool validated)
+          formatted (tool-system/format-results sexp-tool result)
+          file-content (slurp (get-file-path))]
+          ;; Empty new_form with insert operations should be a no-op
+      (is (true? (:error formatted)) "Should indicate error for no match")
+      (is (str/includes? file-content "(+ x 1)") "Original content should be unchanged")))
 
   (testing "Multi-form patterns with insert operations"
     (let [_ (create-test-file "(defn test-fn [x] (let [a 1] (+ a x)) (- x 2))")

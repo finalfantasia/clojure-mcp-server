@@ -1,13 +1,11 @@
 (ns clojure-mcp.tools.eval.tool-test
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures]]
-   [clojure-mcp.tools.test-utils :as test-utils]
-   [clojure-mcp.tools.eval.tool :as eval-tool]
-   [clojure-mcp.tools.eval.core :as eval-core]
+   [clojure-mcp.nrepl]
    [clojure-mcp.tool-system :as tool-system]
-   [clojure-mcp.nrepl :as nrepl]
-   [nrepl.server :as nrepl-server]
-   [clojure.string :as str]))
+   [clojure-mcp.tools.eval.tool :as eval-tool]
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing use-fixtures]]
+   [nrepl.server]))
 
 ;; Setup nREPL server for tests
 (defonce ^:dynamic *nrepl-server* nil)
@@ -113,9 +111,9 @@
   (testing "Multiple expressions"
     (let [result (test-tool-execution "(println \"first\") (+ 10 20)")]
       (is (false? (:error? result)))
-       (is (= 3 (count (:result result))))
-       (is (= ["first\n=> nil" "*===============================================*" "=> 30"]
-              (:result result)))))
+      (is (= 3 (count (:result result))))
+      (is (= ["first\n=> nil" "*===============================================*" "=> 30"]
+             (:result result)))))
 
   (testing "Evaluation with linter warning"
     (let [result (test-tool-execution "(let [unused 1] (+ 2 3))")]

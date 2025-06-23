@@ -1,40 +1,24 @@
 (ns clojure-mcp.agent.langchain
   (:require
-   [clojure.data.json :as json]
    [clojure-mcp.agent.langchain.schema :as schema]
-   [clojure.tools.logging :as log]
-   [clojure.string :as string]
-   [clojure.pprint])
+   [clojure.data.json :as json]
+   [clojure.pprint]
+   [clojure.string :as str]
+   [clojure.tools.logging :as log])
   (:import
    ;; LangChain4j Core and Service classes
-   [dev.langchain4j.service AiServices MemoryId]
-   [dev.langchain4j.agent.tool ToolSpecification #_ToolParameter]
-   [dev.langchain4j.service.tool ToolExecutor ToolExecution]
-   [dev.langchain4j.service TokenStream]
-   [dev.langchain4j.data.message SystemMessage UserMessage TextContent]
-   [dev.langchain4j.agent.tool ToolExecutionRequest]
-   [dev.langchain4j.model.chat.request.json JsonObjectSchema]
-   [dev.langchain4j.memory ChatMemory]
-   [dev.langchain4j.memory.chat MessageWindowChatMemory]
-   [dev.langchain4j.model.chat.request ChatRequest ToolChoice]
+   (dev.langchain4j.agent.tool ToolExecutionRequest ToolSpecification)
+   (dev.langchain4j.data.message SystemMessage UserMessage)
 
+   (dev.langchain4j.memory.chat MessageWindowChatMemory)
    ;; LangChain4j Model classes (using Anthropic as an example)
-   [dev.langchain4j.model.anthropic
-    AnthropicChatModel
-    AnthropicStreamingChatModel
-    AnthropicChatModelName]
-   [dev.langchain4j.model.googleai
-    GoogleAiGeminiChatModel
-    GeminiThinkingConfig]
-   [java.util.function Consumer Function]
-
-   [dev.langchain4j.model.openai
-    OpenAiChatModel
-    OpenAiChatRequestParameters
-    OpenAiChatModelName]
-
-   ;; Java Time API
-   [java.time LocalTime LocalDate ZoneId]))
+   (dev.langchain4j.model.anthropic AnthropicChatModel AnthropicChatModelName)
+   (dev.langchain4j.model.chat.request ChatRequest ChatRequest$Builder)
+   (dev.langchain4j.model.googleai GeminiThinkingConfig GoogleAiGeminiChatModel)
+   (dev.langchain4j.model.openai OpenAiChatModel OpenAiChatRequestParameters)
+   (dev.langchain4j.service AiServices)
+   (dev.langchain4j.service.tool ToolExecutor)
+   (java.util List Map)))
 
 (def default-max-memory 100)
 
@@ -44,7 +28,7 @@
   (-> (GoogleAiGeminiChatModel/builder)
       (.apiKey (System/getenv "GEMINI_API_KEY"))
       (.maxRetries (int 3))
-      (.modelName model-name)))
+      (.modelName ^String model-name)))
 
 (defn gemini-reasoning-effort [builder effort]
   (let [budget (get {:low 1024 :medium 4096 :high 8192} (or effort :low))]
@@ -65,7 +49,7 @@
   (-> (OpenAiChatModel/builder)
       (.apiKey (System/getenv "OPENAI_API_KEY"))
       (.maxRetries (int 3))
-      (.modelName model-name)))
+      (.modelName ^String model-name)))
 
 (declare default-request-parameters reasoning-effort)
 
@@ -78,7 +62,7 @@
   (-> (AnthropicChatModel/builder)
       (.apiKey (System/getenv "ANTHROPIC_API_KEY"))
       (.maxRetries (int 3))
-      (.modelName model-name)))
+      (.modelName ^String model-name)))
 
 (defn anthropic-reasoning-effort [builder effort]
   (let [budget (get {:low 1024 :medium 4096 :high 8192} (or effort :low))
@@ -145,7 +129,7 @@
 
 (defn registration-map->tool-executor [{:keys [tool-fn]}]
   (reify ToolExecutor
-    (execute [_this request memory-id]
+    (execute [_this request _memory-id]
       (let [tool-name (.name request)
             arg-str (.arguments request)]
         (if-let [arg-result (is-well-formed-json? arg-str)]
@@ -158,9 +142,9 @@
                        (fn [result error]
                          (deliver callback-result
                                   (if error
-                                    (str "Tool Error: " (string/join "\n" result))
+                                    (str "Tool Error: " (str/join "\n" result))
                                     (if (sequential? result)
-                                      (string/join "\n\n" result)
+                                      (str/join "\n\n" result)
                                       (str result))))))
               @callback-result)
             (catch Exception e
@@ -186,31 +170,38 @@
                    registration-map->tool-executor)
              registration-maps)))
 
-(defn chat-request [message & {:keys [system-message tools require-tool-choice]}]
-  ;; ChatResponse response = model.chat(request);
-  ;;AiMessage aiMessage = response.aiMessage();
+(defn chat-request
+  [message & {:keys [system-message tools #_require-tool-choice]}]
+   ;; ChatResponse response = model.chat(request);
+   ;;AiMessage aiMessage = response.aiMessage();
   (cond-> (ChatRequest/builder)
-    system-message (.messages (list (SystemMessage. system-message)
-                                    (UserMessage. message)))
-    (not system-message) (.messages (list (UserMessage. message)))
-    (not-empty tools) (.toolSpecifications (map registration-map->tool-specification tools))
-    ;; TODO on next langchain bump
-    ;; require-tool-choice (.toolChoice ToolChoice/REQUIRED)
+    (not (str/blank? system-message))
+    (^[List] ChatRequest$Builder/.messages
+     [(SystemMessage/new system-message) (^[String] UserMessage/new message)])
+
+    (str/blank? system-message)
+    (^[List] ChatRequest$Builder/.messages
+     [(^[String] UserMessage/new message)])
+
+    (seq tools)
+    (^[List] ChatRequest$Builder/.toolSpecifications
+     (map registration-map->tool-specification tools))
+
+     ;; TODO on next langchain bump
+     ;; require-tool-choice (.toolChoice ToolChoice/REQUIRED)
     :else (.build)))
 
 (definterface AiService
   (^String chat [^String userMessage])
-  (^String chat [^dev.langchain4j.data.message.UserMessage userMessage]))
+  (^String chat [^UserMessage userMessage]))
 
 (defn create-service [klass {:keys [model memory tools system-message]}]
-  (-> (AiServices/builder klass) ; Use the interface defined above
+  (-> (AiServices/builder ^Class klass) ; Use the interface defined above
       (.chatModel model)
       (.systemMessageProvider
-       (reify Function
-         (apply [this mem-id]
-           system-message)))
+       (fn [_mem-id] system-message))
       (cond->
-       tools (.tools (convert-tools tools)))
+       tools (.tools ^Map (convert-tools tools)))
       (.chatMemory memory)))
 
 (comment
@@ -237,5 +228,5 @@
 ;; keep this example
 #_(definterface StreamingAiService
     (^dev.langchain4j.service.TokenStream chat [^String userMessage])
-    (^dev.langchain4j.service.TokenStream chat [^dev.langchain4j.data.message.UserMessage userMessage]))
+    (^dev.langchain4j.service.TokenStream chat [^UserMessage userMessage]))
 

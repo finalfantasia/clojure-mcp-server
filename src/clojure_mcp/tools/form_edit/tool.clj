@@ -6,15 +6,14 @@
    - Editing comment blocks
    - Generating file outlines"
   (:require
+   [clojure-mcp.config :as config]
    [clojure-mcp.tool-system :as tool-system]
-   [clojure-mcp.tools.form-edit.core :as core]
    [clojure-mcp.tools.form-edit.pipeline :as pipeline]
    [clojure-mcp.utils.valid-paths :as valid-paths]
-   [clojure-mcp.config :as config]
    [clojure.string :as str]
    [clojure.java.io :as io]
-   [rewrite-clj.parser :as p]
-   [rewrite-clj.node :as n]))
+   [rewrite-clj.node :as n]
+   [rewrite-clj.parser :as p]))
 
 ;; Factory functions to create the tool configurations
 
@@ -91,24 +90,24 @@
 
 (defmethod tool-system/tool-description :clojure-edit-replace-form [_]
   "Edits a top-level form (`defn`, `def`, `defmethod`, `ns`, `deftest`) in a Clojure file by fully replacing it.
-  
+
 PREFER this tool along with `clojure_edit_insert_before_definition` ``clojure_edit_insert_after_definition` are for editing Clojure files (`.clj` `.cljs` `.cljc` `.bb`)
 
 These tools MAKE it EASIER to match a definition that exists in the file AS you only have to match the type of definition `form_type` and the complete identifier `form_identifier` of the definition. This prevents the repeated mismatch errors that occur when trying match an entire `old_string` to replace it.
 These tools validates the structure of the structure of the Clojure code that is being inserted into the file and will provide linting feedback for things such as parenthetical errors.
 These tools reduces the number of tokens that need to be generated and that makes me happy!
- 
+
 WARNING: you will receive errors if the syntax is wrong, the most common error is an extra or missing parenthesis at the end of the replacement function in `content`, so be careful with parenthesis.
 
 This tool can replace a specific top-level form (like a function, def, or namespace declaration) with new content. The form is identified by its type (defn, def, deftest, s/def, ns, defmethod etc.) and complete identifier.
-   
+
    Example: Replace the implementation of a `defn` named `example-fn`:
    - file_path: \"/path/to/file.clj\"
    - form_identifier: \"example-fn\"
    - form_type: \"defn\"
    - content: \"(defn example-fn [x] (* x 2))\"
-   
-Note: For `defmethod` forms, be sure to include the dispatch value (`area :rectangle` or `qualified/area :rectangle`) in the `form_identifier`. Many `defmethod` definitions have qualified names (they include a namespace alias in their identifier like `shape/area`), so it's crucial to use the complete identifier that appears in the file. 
+
+Note: For `defmethod` forms, be sure to include the dispatch value (`area :rectangle` or `qualified/area :rectangle`) in the `form_identifier`. Many `defmethod` definitions have qualified names (they include a namespace alias in their identifier like `shape/area`), so it's crucial to use the complete identifier that appears in the file.
 
    Example: Replace the implementation of a `defmethod` named `shape/area :square`:
    - file_path: \"/path/to/file.clj\"
@@ -162,7 +161,7 @@ Note: For `defmethod` forms, be sure to include the dispatch value (`area :recta
      :form_type form_type
      :content content}))
 
-(defmethod tool-system/execute-tool :clojure-edit-replace-form [{:keys [nrepl-client-atom] :as tool} inputs]
+(defmethod tool-system/execute-tool :clojure-edit-replace-form [tool inputs]
   (let [{:keys [file_path form_name form_type content]} inputs
         result (pipeline/edit-form-pipeline file_path form_name form_type content :replace tool)
         formatted-result (pipeline/format-result result)]
@@ -182,23 +181,23 @@ Note: For `defmethod` forms, be sure to include the dispatch value (`area :recta
 
 (defmethod tool-system/tool-description :clojure-edit-insert-before-form [_]
   "Inserts content before a top-level form (`defn`, `def`, `defmethod`, `ns`, `deftest`) in a Clojure file.
-   
+
 PREFER this tool along with `clojure_edit_replace_definition` and `clojure_edit_insert_after_definition` for editing Clojure files (`.clj` `.cljs` `.cljc` `.bb`)
 
 These tools MAKE it EASIER to match a definition that exists in the file AS you only have to match the type of definition `form_type` and the complete identifier `form_identifier` of the definition. This prevents the repeated mismatch errors that occur when trying match an entire `old_string` to replace it.
 These tools validates the structure of the Clojure code that is being inserted into the file and will provide linting feedback for things such as parenthetical errors.
 These tools reduces the number of tokens that need to be generated and that makes me happy!
- 
+
 WARNING: you will receive errors if the syntax is wrong, the most common error is an extra or missing parenthesis at the end of the inserted content in `content`, so be careful with parenthesis.
 
 This tool adds new content before a specific top-level form (like a function, def, or namespace declaration) without modifying the form itself. The form is identified by its type (defn, def, deftest, s/def, ns, defmethod etc.) and complete identifier.
-   
+
    Example: Insert a helper function before `example-fn`:
    - file_path: \"/path/to/file.clj\"
    - form_identifier: \"example-fn\"
    - form_type: \"defn\"
    - content: \"(defn helper-fn [x] (* x 2))\"
-   
+
 Note: For `defmethod` forms, be sure to include the dispatch value (`area :rectangle` or `qualified/area :rectangle`) in the `form_identifier`. Many `defmethod` definitions have qualified names (they include a namespace alias in their identifier like `shape/area`), so it's crucial to use the complete identifier that appears in the file.
 
    Example: Insert a helper function before a `defmethod` named `shape/area :square`:
@@ -254,7 +253,7 @@ Note: For `defmethod` forms, be sure to include the dispatch value (`area :recta
      :form_type form_type
      :content content}))
 
-(defmethod tool-system/execute-tool :clojure-edit-insert-before-form [{:keys [nrepl-client-atom] :as tool} inputs]
+(defmethod tool-system/execute-tool :clojure-edit-insert-before-form [tool inputs]
   (let [{:keys [file_path form_name form_type content]} inputs
         result (pipeline/edit-form-pipeline file_path form_name form_type content :before tool)
         formatted-result (pipeline/format-result result)]
@@ -274,23 +273,23 @@ Note: For `defmethod` forms, be sure to include the dispatch value (`area :recta
 
 (defmethod tool-system/tool-description :clojure-edit-insert-after-form [_]
   "Inserts content after a top-level form (`defn`, `def`, `defmethod`, `ns`, `deftest`) in a Clojure file.
-   
+
 PREFER this tool along with `clojure_edit_replace_definition` and `clojure_edit_insert_before_definition` for editing Clojure files (`.clj` `.cljs` `.cljc` `.bb`)
 
 These tools MAKE it EASIER to match a definition that exists in the file AS you only have to match the type of definition `form_type` and the complete identifier `form_identifier` of the definition. This prevents the repeated mismatch errors that occur when trying match an entire `old_string` to replace it.
 These tools validates the structure of the Clojure code that is being inserted into the file and will provide linting feedback for things such as parenthetical errors.
 These tools reduces the number of tokens that need to be generated and that makes me happy!
- 
+
 WARNING: you will receive errors if the syntax is wrong, the most common error is an extra or missing parenthesis at the end of the inserted content in `content`, so be careful with parenthesis.
 
 This tool adds new content after a specific top-level form (like a function, def, or namespace declaration) without modifying the form itself. The form is identified by its type (defn, def, deftest, s/def, ns, defmethod etc.) and complete identifier.
-   
+
    Example: Insert a test after a function named `example-fn`:
    - file_path: \"/path/to/file.clj\"
    - form_identifier: \"example-fn\"
    - form_type: \"defn\"
    - content: \"(deftest example-fn-test\n  (is (= 4 (example-fn 2))))\"
-   
+
 Note: For `defmethod` forms, be sure to include the dispatch value (`area :rectangle` or `qualified/area :rectangle`) in the `form_identifier`. Many `defmethod` definitions have qualified names (they include a namespace alias in their identifier like `shape/area`), so it's crucial to use the complete identifier that appears in the file.
 
    Example: Insert a test after a `defmethod` named `shape/area :square`:
@@ -346,7 +345,7 @@ Note: For `defmethod` forms, be sure to include the dispatch value (`area :recta
      :form_type form_type
      :content content}))
 
-(defmethod tool-system/execute-tool :clojure-edit-insert-after-form [{:keys [nrepl-client-atom] :as tool} inputs]
+(defmethod tool-system/execute-tool :clojure-edit-insert-after-form [tool inputs]
   (let [{:keys [file_path form_name form_type content]} inputs
         result (pipeline/edit-form-pipeline file_path form_name form_type content :after tool)
         formatted-result (pipeline/format-result result)]
@@ -366,22 +365,22 @@ Note: For `defmethod` forms, be sure to include the dispatch value (`area :recta
 
 (defmethod tool-system/tool-description :clojure-edit-replace-docstring [_]
   "Edits only the docstring of a top-level form in a Clojure file.
-   
+
    This tool updates the docstring of a function, def, or other form without
    modifying the rest of the form. The form is identified by its type and complete identifier.
-   
+
    Example: Update the docstring of 'example-fn':
    - file_path: \"/path/to/file.clj\"
    - form_identifier: \"example-fn\"
    - form_type: \"defn\"
    - docstring: \"Takes an integer and doubles it.\"
-   
+
    Example: Update the docstring of a namespaced multimethod implementation:
    - file_path: \"/path/to/file.clj\"
    - form_identifier: \"tool-system/validate-inputs :clojure-eval\"
    - form_type: \"defmethod\"
    - docstring: \"Validates inputs for the clojure-eval tool.\"
-   
+
    The tool will find the form, update only its docstring, and format the result.
    It returns the updated file content, the location offsets, and a diff of the changes.")
 
@@ -418,7 +417,7 @@ Note: For `defmethod` forms, be sure to include the dispatch value (`area :recta
      :docstring docstring}))
 
 (defmethod tool-system/execute-tool :clojure-edit-replace-docstring
-  [{:keys [nrepl-client-atom] :as tool} inputs]
+  [tool inputs]
   (let [{:keys [file_path form_name form_type docstring]} inputs
         result (pipeline/docstring-edit-pipeline file_path form_name form_type docstring tool)
         formatted-result (pipeline/format-result result)]
@@ -471,7 +470,7 @@ For reliable results, use a unique substring that appears in only one comment bl
      :comment_substring comment_substring
      :new_content new_content}))
 
-(defmethod tool-system/execute-tool :clojure-edit-comment-block [{:keys [nrepl-client-atom] :as tool} inputs]
+(defmethod tool-system/execute-tool :clojure-edit-comment-block [tool inputs]
   (let [{:keys [file_path comment_substring new_content]} inputs
         result (pipeline/comment-block-edit-pipeline file_path comment_substring new_content tool)
         formatted-result (pipeline/format-result result)]
@@ -603,7 +602,7 @@ For reliable results, use a unique substring that appears in only one comment bl
                              (or replace_all false)))
      :whitespace_sensitive (boolean (or whitespace_sensitive false))}))
 
-(defmethod tool-system/execute-tool :clojure-update-sexp [{:keys [multi-op nrepl-client-atom] :as tool} inputs]
+(defmethod tool-system/execute-tool :clojure-update-sexp [{:keys [multi-op] :as tool} inputs]
   (let [{:keys [file_path match_form new_form operation replace_all whitespace_sensitive]} inputs
         ;; Convert operation string to keyword for the pipeline
         operation-kw (if-not multi-op
@@ -643,7 +642,6 @@ For reliable results, use a unique substring that appears in only one comment bl
   (def insert-after-tool (create-edit-insert-after-form-tool client-atom))
   (def docstring-tool (create-edit-docstring-tool client-atom))
   (def comment-tool (create-edit-comment-block-tool client-atom))
-
   (def sexp-tool (create-update-sexp-tool client-atom))
 
   ;; Test the replace form tool

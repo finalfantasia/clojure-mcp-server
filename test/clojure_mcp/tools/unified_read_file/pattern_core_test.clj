@@ -1,6 +1,6 @@
 (ns clojure-mcp.tools.unified-read-file.pattern-core-test
-  (:require [clojure.test :refer [deftest testing is]]
-            [clojure-mcp.tools.unified-read-file.pattern-core :as collapsed]))
+  (:require [clojure-mcp.tools.unified-read-file.pattern-core :as collapsed]
+            [clojure.test :refer [deftest is testing]]))
 
 ;; Test data
 (def basic-source
@@ -99,7 +99,7 @@
   (* x 2))
 
 (defn ^{:author \"John Doe\"
-        :version \"1.0\"} 
+        :version \"1.0\"}
   documented-fn
   [x y]
   (+ x y))
@@ -278,38 +278,38 @@
 (deftest test-special-forms-and-edge-cases
   (testing "Protocol and record forms"
     (let [source "(ns test.proto)
-                  
+
                   (defprotocol MyProtocol
                     \"A protocol\"
                     (my-method [this] [this x]))
-                  
+
                   (defrecord MyRecord [a b]
                     MyProtocol
                     (my-method [this] :one-arg)
-                    (my-method [this x] :two-args))"]
-      (let [result (collapsed/generate-collapsed-view* source nil nil)]
-        (is (re-find #"\(defprotocol MyProtocol \.\.\.\)" (:view result)))
-        (is (re-find #"\(defrecord MyRecord \.\.\.\)" (:view result))))))
+                    (my-method [this x] :two-args))"
+          result (collapsed/generate-collapsed-view* source nil nil)]
+      (is (re-find #"\(defprotocol MyProtocol \.\.\.\)" (:view result)))
+      (is (re-find #"\(defrecord MyRecord \.\.\.\)" (:view result)))))
 
   (testing "Multiline strings in forms"
     (let [source "(ns test.multi)
-                  
+
                   (def long-string
                     \"This is a very long
                      multiline string that
                      spans several lines\")
-                  
+
                   (defn process-text
                     \"Process multiline text\"
                     [text]
-                    (str/replace text #\"\\n\" \" \"))"]
-      (let [result (collapsed/generate-collapsed-view* source "long-string" nil)]
-        (is (= 1 (get-in result [:pattern-info :expanded-forms])))
-        (is (re-find #"multiline string" (:view result))))))
+                    (str/replace text #\"\\n\" \" \"))"
+          result (collapsed/generate-collapsed-view* source "long-string" nil)]
+      (is (= 1 (get-in result [:pattern-info :expanded-forms])))
+      (is (re-find #"multiline string" (:view result)))))
 
   (testing "Complex nested forms"
     (let [source "(ns test.nested)
-                  
+
                   (defn deeply-nested
                     [x]
                     (let [a (+ x 1)
@@ -318,26 +318,26 @@
                         (do
                           (println \"Large value:\" b)
                           (reduce + (map #(* % %) (range b))))
-                        b)))"]
-      (let [result (collapsed/generate-collapsed-view* source nil "reduce")]
-        (is (= 1 (get-in result [:pattern-info :expanded-forms])))
-        (is (re-find #"reduce \+" (:view result))))))
+                        b)))"
+          result (collapsed/generate-collapsed-view* source nil "reduce")]
+      (is (= 1 (get-in result [:pattern-info :expanded-forms])))
+      (is (re-find #"reduce \+" (:view result)))))
 
   (testing "Anonymous functions and special characters"
     (let [source "(ns test.anon)
-                  
+
                   (def handlers
                     {:click #(println \"Clicked:\" %)
                      :hover (fn [e] (println \"Hovered:\" e))})
-                  
+
                   (defn process->result
                     \"Process with special chars in name\"
                     [data]
                     (-> data
                         (update :value inc)
-                        (assoc :processed? true)))"]
-      (let [result (collapsed/generate-collapsed-view* source "process->result" nil)]
-        (is (= 1 (get-in result [:pattern-info :expanded-forms])))
-        (is (re-find #"Process with special chars" (:view result)))))))
+                        (assoc :processed? true)))"
+          result (collapsed/generate-collapsed-view* source "process->result" nil)]
+      (is (= 1 (get-in result [:pattern-info :expanded-forms])))
+      (is (re-find #"Process with special chars" (:view result))))))
 
 ;; Run tests with: clojure -X:test :nses '[clojure-mcp.tools.unified-read-file.pattern-core-enhanced-with-collapsed-test]

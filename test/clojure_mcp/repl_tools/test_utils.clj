@@ -1,8 +1,8 @@
 (ns clojure-mcp.repl-tools.test-utils
   (:require
    [clojure-mcp.nrepl :as nrepl]
-   [nrepl.server :as nrepl-server]
-   [clojure.test :refer [use-fixtures]]))
+   [clojure.test :refer [use-fixtures]]
+   [nrepl.server :as nrepl-server]))
 
 (defonce ^:dynamic *nrepl-server* nil)
 (defonce ^:dynamic *nrepl-client-atom* nil)
@@ -39,6 +39,6 @@
       @prom)))
 
 ;; Apply fixtures in each test namespace
-(defn apply-fixtures [test-namespace]
+(defn apply-fixtures [_test-namespace]
   (use-fixtures :once test-nrepl-fixture)
   (use-fixtures :each cleanup-test-file))

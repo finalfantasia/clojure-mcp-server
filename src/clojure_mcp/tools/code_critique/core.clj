@@ -2,8 +2,8 @@
   "Core implementation for the code critique tool.
    This namespace contains the pure functionality without any MCP-specific code."
   (:require
-   [clojure.string :as string]
    [clojure-mcp.agent.langchain :as chain]
+   [clojure.string :as string]
    [clojure.tools.logging :as log])
   (:import
    [clojure_mcp.agent.langchain AiService]))
@@ -12,7 +12,7 @@
 
 (defn create-ai-service
   "Creates an AI service for code critique.
-   
+
    Args:
    - model: Optional pre-built langchain model. If nil, uses chain/reasoning-agent-model"
   ([] (create-ai-service nil))
@@ -43,7 +43,7 @@
 
 (defn critique-code
   "Critiques the given Clojure code using an AI service.
-   
+
    Args:
    - tool-map: Map containing :nrepl-client-atom and optional :model
    - inputs: Map containing :code and optional :context"
@@ -77,29 +77,29 @@
   ;; Example critique with custom model
   (critique-code {:nrepl-client-atom (atom {}) :model custom-model} "(defn i [x] x)"))
 
-;; beter to read this from an text file in resources
+;; better to read this from a text file in resources
 (defn system-message [n]
   (let [nstr (if (= 1 n) "single" n)
         improvement (cond-> "improvement"
                       (> n 1) (str "s"))]
     (format
-     "You are a super power Rich Hickey Clojure code advisor. Your task is to analyze code and provide feedback for improvements.
+     "You are a superpower Rich Hickey Clojure code advisor. Your task is to analyze code and provide feedback for improvements.
 
-You are going to be presented with code and you job is to find the %1$s most important structural %2$s to the code. And then present a concise description of the %2$s.
+You are going to be presented with code, and you job is to find the %1$s most important structural %2$s to the code. And then present a concise description of the %2$s.
 
-When you see a loop reccomend `iterate` or `reduce` if its appropriate.
-When you see nesting look for threading `some->` `->>` `->` opporutnities
+When you see a loop recommend `iterate` or `reduce` if it's appropriate.
+When you see nesting look for threading `some->` `->>` `->` opportunities
 
 Do not validate an approach, always offer the next %2$s.
 
-Always, discourage code comments and docstrings as they are unnecessary while iterating on code and they eat up LLM tokens (expensive) and they slow down development.
+Always, discourage code comments and docstrings as they are unnecessary while iterating on code, and they eat up LLM tokens (expensive) and they slow down development.
 
 Always, let based local functions are discouraged for two important reasons:
-1. they are harder to test idividualy
+1. they are harder to test individually
 2. AI assistants have a much easier time editing smaller functions just like humans
-3. It's an opportunity to create a resuable function to share with others. 
+3. It's an opportunity to create a reusable function to share with others.
 
-Frequently recommend extracting functions.  For longer functions: always extract predicates that are longer than 5 lines. Extracting the step functions (if more than a few lines) for `reduce` and `iterate` is often a gread improvment as you can test them separately.
+Frequently recommend extracting functions.  For longer functions: always extract predicates that are longer than 5 lines. Extracting the step functions (if more than a few lines) for `reduce` and `iterate` is often a great improvement as you can test them separately.
 
 <example-response>
 I think you can use `reduce` instead of a loop
@@ -115,7 +115,7 @@ This function is too long please break it up into several smaller functions, tha
 
 
 <example-response>
-This function is using state, probably better to use `iterate` 
+This function is using state, probably better to use `iterate`
 </example-response>
 
 

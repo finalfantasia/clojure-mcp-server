@@ -1,7 +1,7 @@
 (ns clojure-mcp.utils.valid-paths-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure-mcp.utils.valid-paths :as valid-paths]
             [clojure.java.io :as io]
-            [clojure-mcp.utils.valid-paths :as valid-paths]))
+            [clojure.test :refer [deftest is testing]]))
 
 (deftest extract-paths-from-bash-command-test
   (testing "Basic path extraction"

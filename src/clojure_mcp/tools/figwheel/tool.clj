@@ -1,12 +1,11 @@
 (ns clojure-mcp.tools.figwheel.tool
   (:require
-   [clojure.tools.logging :as log]
-   [clojure.string :as string]
    [clojure-mcp.nrepl :as nrepl]
    [clojure-mcp.tool-system :as tool-system]
+   [clojure-mcp.tools.eval.core :as eval-core]
    [clojure-mcp.tools.eval.tool :as eval-tool]
-   [clojure-mcp.tools.eval.core :as eval-core]))
-
+   [clojure.string :as string]
+   [clojure.tools.logging :as log]))
 
 (defn start-figwheel [nrepl-client-atom build]
   (let [figwheel-session (nrepl/new-session @nrepl-client-atom)
@@ -28,7 +27,7 @@
 
 (defn create-figwheel-eval-tool
   "Creates the evaluation tool configuration"
-  [nrepl-client-atom {:keys [figwheel-build] :as config}]
+  [nrepl-client-atom {:keys [figwheel-build] :as _config}]
   (let [figwheel-session (start-figwheel nrepl-client-atom figwheel-build)]
     {:tool-type ::figwheel-eval
      :nrepl-client-atom nrepl-client-atom
@@ -42,7 +41,7 @@
   "clojurescript_eval")
 
 (defmethod tool-system/tool-description ::figwheel-eval [_]
-    "Takes a ClojureScript Expression and evaluates it in the current namespace. For example, providing `(+ 1 2)` will evaluate to 3.
+  "Takes a ClojureScript Expression and evaluates it in the current namespace. For example, providing `(+ 1 2)` will evaluate to 3.
 
 **Project File Access**: Can load and use any ClojureScript file from your project with `(require '[your-namespace.core :as core] :reload)`. Always use `:reload` to ensure you get the latest version of files. Access functions, examine state with `@your-atom`, and manipulate application data for debugging and testing. 
 

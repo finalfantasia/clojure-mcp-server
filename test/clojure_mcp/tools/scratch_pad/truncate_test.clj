@@ -1,6 +1,6 @@
 (ns clojure-mcp.tools.scratch-pad.truncate-test
-  (:require [clojure.test :refer :all]
-            [clojure-mcp.tools.scratch-pad.truncate :as truncate]))
+  (:require [clojure-mcp.tools.scratch-pad.truncate :as truncate]
+            [clojure.test :refer [deftest is testing]]))
 
 (deftest truncate-depth-test
   (testing "Basic truncation at different depths"
@@ -52,11 +52,11 @@
   (testing "Preserves collection types"
     (let [data {:sorted (sorted-map :z 1 :a 2)
                 :list '(1 2 3)
-                :vec [1 2 3]}]
-      (let [result (truncate/truncate-depth data 1)]
-        (is (sorted? (:sorted result)))
-        (is (list? (:list result)))
-        (is (vector? (:vec result))))))
+                :vec [1 2 3]}
+          result (truncate/truncate-depth data 1)]
+      (is (sorted? (:sorted result)))
+      (is (list? (:list result)))
+      (is (vector? (:vec result)))))
 
   (testing "Custom ellipsis"
     (is (= {:a {'<...> '...1_entries}}

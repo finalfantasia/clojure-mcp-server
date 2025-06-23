@@ -1,9 +1,9 @@
 (ns clojure-mcp.tools.unified-read-file.core-test
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures]]
    [clojure-mcp.tools.unified-read-file.core :as read-file-core]
    [clojure.java.io :as io]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing use-fixtures]]))
 
 ;; Setup test fixtures
 (def ^:dynamic *test-dir* nil)

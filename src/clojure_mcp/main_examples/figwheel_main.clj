@@ -1,11 +1,11 @@
 (ns clojure-mcp.main-examples.figwheel-main
   "Example of a custom MCP server that adds ClojureScript evaluation via Figwheel Main.
-   
+
    This demonstrates the new pattern for creating custom MCP servers:
    1. Define a make-tools function that extends the base tools
    2. Call core/build-and-start-mcp-server with factory functions
    3. Reuse the standard make-prompts and make-resources from main
-   
+
    Note: Piggieback must be configured in your nREPL middleware for this to work.
    See the comments below for the required deps.edn configuration."
   (:require

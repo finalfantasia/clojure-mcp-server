@@ -1,8 +1,8 @@
 (ns clojure-mcp.tools.scratch-pad.core
   (:require
-   [clojure.pprint :as pprint]
+   [clojure-mcp.tools.scratch-pad.smart-path :as sp]
    [clojure-mcp.tools.scratch-pad.truncate :as truncate]
-   [clojure-mcp.tools.scratch-pad.smart-path :as sp]))
+   [clojure.pprint :as pprint]))
 
 (defn inspect-data [data]
   (if (empty? data)
@@ -39,7 +39,7 @@
 (defn execute-inspect
   "Execute an inspect operation and return the result map."
   [current-data depth path]
-  (let [data-to-view (if (and path (not (empty? path)))
+  (let [data-to-view (if (seq path)
                        (sp/smart-get-in current-data path)
                        current-data)]
     (if (nil? data-to-view)

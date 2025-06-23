@@ -17,7 +17,7 @@
          patch (DiffUtils/diff original-lines revised-lines)
          unified-diff (UnifiedDiffUtils/generateUnifiedDiff
                        "original.txt" ;; default filename
-                       "revised.txt"  ;; default filename
+                       "revised.txt" ;; default filename
                        original-lines
                        patch
                        context-lines)]

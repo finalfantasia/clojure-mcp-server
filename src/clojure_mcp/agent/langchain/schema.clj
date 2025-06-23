@@ -2,17 +2,16 @@
   (:require
    [clojure.string :as string])
   (:import
-   [dev.langchain4j.model.chat.request.json
+   (dev.langchain4j.model.chat.request.json
     JsonAnyOfSchema
     JsonArraySchema
     JsonBooleanSchema
     JsonEnumSchema
     JsonIntegerSchema
-    JsonNullSchema
     JsonNumberSchema
     JsonObjectSchema
-    JsonStringSchema
-    JsonSchemaElement]))
+    JsonStringSchema)
+   (java.util List)))
 
 (defmulti edn->sch
   (fn [{:keys [type enum] :as json-edn}]
@@ -48,7 +47,7 @@
                       type)]
     (cond-> (JsonAnyOfSchema/builder)
       description (.description description)
-      :always (.anyOf schemas)
+      :always (.anyOf ^List schemas)
       :always (.build))))
 
 (defmethod edn->sch :string [{:keys [description]}]
@@ -79,7 +78,7 @@
   (assert (every? string? enum))
   (assert (not-empty enum))
   (-> (JsonEnumSchema/builder)
-      (.enumValues (map name enum))
+      (.enumValues ^List (map name enum))
       (.build)))
 
 (defmethod edn->sch :array [{:keys [items]}]
@@ -93,7 +92,7 @@
   (let [obj-build
         (cond-> (JsonObjectSchema/builder)
           (not (string/blank? description)) (.description description)
-          (not-empty required) (.required (map name required)))]
+          (not-empty required) (.required ^List (map name required)))]
     (doseq [[nm edn-schema] properties]
       (.addProperty obj-build (name nm) (edn->sch edn-schema)))
     (.build obj-build)))
@@ -154,6 +153,6 @@
                                                              :description "The name"}
                                                        :new {:type :string
                                                              :description "The name"}}
-                                          :required [:old :new]}}}})
-  )
+                                          :required [:old :new]}}}}))
+
 

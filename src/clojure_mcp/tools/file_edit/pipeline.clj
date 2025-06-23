@@ -3,25 +3,23 @@
    Provides a thread-first pattern with error short-circuiting and
    standardized context maps for file editing."
   (:require
-   [clojure-mcp.tools.file-edit.core :as core]
-   [clojure-mcp.tools.form-edit.pipeline :as form-pipeline]
-   [clojure-mcp.tools.form-edit.core :as form-edit-core]
-   [clojure-mcp.tools.file-write.core :as file-write-core]
-   [clojure-mcp.tools.unified-read-file.file-timestamps :as file-timestamps]
-   [clojure-mcp.utils.emacs-integration :as emacs]
    [clojure-mcp.config :as config]
-   [clojure-mcp.linting :as linting]
+   [clojure-mcp.tools.file-edit.core :as core]
+   [clojure-mcp.tools.file-write.core :as file-write-core]
+   [clojure-mcp.tools.form-edit.core :as form-edit-core]
+   [clojure-mcp.tools.form-edit.pipeline :as form-pipeline]
+   [clojure.java.io :as io]
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
-   [clojure.java.io :as io]
-   [clojure.tools.logging :as log]))
+   [clojure.tools.logging :as log])
+  (:import (clojure.lang Atom)))
 
 ;; We'll reuse many definitions from form-edit pipeline and add our own specific ones
 
 ;; Additional context map specs
 (s/def ::old-string string?)
 (s/def ::new-string string?)
-(s/def ::nrepl-client-atom (s/nilable #(instance? clojure.lang.Atom %)))
+(s/def ::nrepl-client-atom (s/nilable #(instance? Atom %)))
 ;; Pipeline specific steps
 
 ;; Using check-file-modified from form-edit/pipeline instead
@@ -45,20 +43,19 @@
    Requires ::file-path, ::old-string, ::new-string, and ::form-pipeline/source in the context.
    Adds ::form-pipeline/output-source to the context."
   [ctx]
-  (let [file-path (::form-pipeline/file-path ctx)
-        old-string (::old-string ctx)
+  (let [old-string (::old-string ctx)
         new-string (::new-string ctx)
         source (::form-pipeline/source ctx)
         ;; Get new content by performing the edit
-        edited-content (core/perform-file-edit file-path old-string new-string source)]
+        edited-content (core/perform-file-edit old-string new-string source)]
     (assoc ctx ::form-pipeline/output-source edited-content)))
 
 (defn format-clojure-content
   "Formats the content if it's a Clojure file.
-   
+
    Arguments:
    - ctx: Context map containing ::form-pipeline/file-path and ::form-pipeline/output-source
-   
+
    Returns:
    - Updated context with formatted content for Clojure files, or unchanged for other file types"
   [ctx]
@@ -75,14 +72,14 @@
                                 output-source
                                 formatting-options)]
           (assoc ctx ::form-pipeline/output-source formatted-source))
-        (catch Exception e
+        (catch Exception _e
           ctx))
       ctx)))
 
 (defn capture-file-edit-offsets
   "Captures the position offsets of the edited region in a file.
    This function calculates character offsets for the edited region for highlighting.
-   
+
    Requires ::form-pipeline/source and ::old-string in the context.
    Adds ::form-pipeline/offsets to the context when successful."
   [ctx]
@@ -111,14 +108,14 @@
 
 (defn file-edit-pipeline
   "Pipeline for editing a file by replacing a string.
-   
+
    Arguments:
    - file-path: Path to the file to edit
    - old-string: String to replace
    - new-string: New string to insert
    - nrepl-client-atom: Atom containing the nREPL client (optional)
    - config: Optional tool configuration map
-   
+
    Returns:
    - A context map with the result of the operation"
   [file-path old-string new-string {:keys [nrepl-client-atom] :as config}]
@@ -152,10 +149,10 @@
 ;; Format result for tool consumption
 (defn format-result
   "Format the result of the pipeline for tool consumption.
-   
+
    Arguments:
    - ctx: The final context map from the pipeline
-   
+
    Returns:
    - A map with :error, :message, and :diff keys, and potentially :repaired"
   [ctx]

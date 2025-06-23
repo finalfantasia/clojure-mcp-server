@@ -1,14 +1,14 @@
 (ns clojure-mcp.tools.unified-clojure-edit.tool
   "MCP tool implementation for the unified Clojure edit operation.
    Provides a pattern-based approach to finding and editing Clojure code."
-  (:require [clojure-mcp.tool-system :as tool-system]
-            [clojure-mcp.tools.unified-clojure-edit.pipeline :as clj-edit-pipeline]
-            [clojure-mcp.tools.form-edit.pipeline :as pipeline]
+  (:require [clojure-mcp.config :as config]
             [clojure-mcp.linting :as linting]
+            [clojure-mcp.tool-system :as tool-system]
+            [clojure-mcp.tools.form-edit.pipeline :as pipeline]
+            [clojure-mcp.tools.unified-clojure-edit.pipeline :as clj-edit-pipeline]
             [clojure-mcp.utils.valid-paths :as valid-paths]
-            [clojure-mcp.config :as config]
-            [clojure.tools.logging :as log]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.tools.logging :as log]))
 
 ;; Tool name and description
 (defmethod tool-system/tool-name :clojure-pattern-edit [_]
@@ -200,7 +200,7 @@ THis tool can also target explicit sexps when used without the pattern symbols.
      :operation (keyword operation)}))
 
 ;; Execute the tool
-(defmethod tool-system/execute-tool :clojure-pattern-edit [{:keys [nrepl-client-atom] :as tool} inputs]
+(defmethod tool-system/execute-tool :clojure-pattern-edit [tool inputs]
   (let [{:keys [file_path pattern content operation]} inputs]
 
     (log/info "Executing clojure_pattern_edit"

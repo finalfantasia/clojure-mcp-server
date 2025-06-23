@@ -3,19 +3,21 @@
    Provides a thread-first pattern with error short-circuiting and
    standardized context maps."
   (:require
-   [clojure-mcp.tools.form-edit.core :as core]
-   [clojure-mcp.utils.emacs-integration :as emacs]
-   [clojure-mcp.utils.diff :as diff-utils]
-   [clojure-mcp.tools.unified-read-file.file-timestamps :as file-timestamps]
    [clojure-mcp.config :as config]
-   [rewrite-clj.zip :as z]
-   [rewrite-clj.parser :as p]
    [clojure-mcp.linting :as linting]
    [clojure-mcp.sexp.paren-utils :as paren-utils]
+   [clojure-mcp.tools.form-edit.core :as core]
+   [clojure-mcp.tools.unified-read-file.file-timestamps :as file-timestamps]
+   [clojure-mcp.utils.diff :as diff-utils]
+   [clojure-mcp.utils.emacs-integration :as emacs]
+   [clojure.java.io :as io]
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
-   [clojure.java.io :as io]
-   [clojure.tools.logging :as log]))
+   [clojure.tools.logging :as log]
+   [rewrite-clj.parser :as p]
+   [rewrite-clj.zip :as z])
+  (:import (clojure.lang Atom)
+           (java.io File)))
 
 ;; Context map specs
 
@@ -40,7 +42,7 @@
 (s/def ::diff string?)
 (s/def ::type string?)
 
-(s/def ::nrepl-client-atom (s/nilable #(instance? clojure.lang.Atom %)))
+(s/def ::nrepl-client-atom (s/nilable #(instance? Atom %)))
 
 ;; Context map that flows through the pipeline
 (s/def ::context
@@ -55,11 +57,11 @@
 
 (defn thread-ctx
   "Thread a context map through a series of functions, short-circuiting on error.
-   
+
    Arguments:
    - ctx: The initial context map
    - fns: A sequence of functions to apply to the context
-   
+
    Returns:
    - The final context, possibly containing an error"
   [ctx & fns]
@@ -108,10 +110,10 @@
 (defn emacs-buffer-modified-check
   "Check if the emacs buffer is modified and saves it. When used before
   check-file-modifed, it will trigger the modification error.
-  
-  A modified buffer is another level to check for file modifications.  
 
-  Marking it as modified. This in turn will trigger the check last modified 
+  A modified buffer is another level to check for file modifications.
+
+  Marking it as modified. This in turn will trigger the check last modified
   to error out requiring the LLM to read the file before editing."
   [ctx]
   (let [file-path (::file-path ctx)
@@ -126,7 +128,7 @@
   "Checks if the file has been modified since last read.
    Returns error if modified without being read again.
    Respects the write-file-guard configuration setting.
-   
+
    Requires ::file-path and ::nrepl-client-atom in context."
   [ctx]
   (let [file-path (::file-path ctx)
@@ -195,12 +197,12 @@
 (defn enhance-defmethod-name
   "If this is a defmethod form without a dispatch value in its name,
    extract the dispatch value from the replacement code.
-   
+
    This function handles the special case of defmethod forms by extracting
    the dispatch value from the replacement content when not explicitly provided
    in the form name. This allows users to target specific defmethod implementations
    without having to use the 'method-name dispatch-value' syntax.
-   
+
    Requires ::top-level-def-type, ::top-level-def-name, and ::new-source-code in the context.
    May update ::top-level-def-name with the enhanced name."
   [ctx]
@@ -236,7 +238,7 @@
 (defn capture-edit-offsets
   "Captures the position offsets of the current zipper location.
    This should be called immediately after editing operations while position information is valid.
-   
+
    Requires ::zloc in the context.
    Adds ::offsets to the context when successful."
   [ctx]
@@ -255,10 +257,10 @@
 (defn validate-form-type
   "Validates that the form type is supported for the operation.
    Returns the context unchanged if valid, or error context if invalid.
-   
+
    Arguments:
    - ctx: Context map containing ::top-level-def-type
-   
+
    Returns:
    - Updated context with error information if form type is not supported"
   [ctx]
@@ -307,7 +309,7 @@
 
 (defn edit-form
   "Edits the form according to the specified edit type.
-   Requires ::zloc, ::top-level-def-type, ::top-level-def-name, 
+   Requires ::zloc, ::top-level-def-type, ::top-level-def-name,
    ::new-source-code, and ::edit-type in the context.
    Updates ::zloc with the edited zipper."
   [ctx]
@@ -400,7 +402,7 @@
   "Formats the source code using the formatter.
    If formatting fails but the source is syntactically valid,
    returns the original source unchanged.
-   
+
    Requires ::output-source in the context.
    Updates ::output-source with the formatted code (or unchanged if formatting fails)."
   [ctx]
@@ -425,23 +427,24 @@
 
 (defn determine-file-type
   "Determine if the file operation is a create or update.
-   
+
    Arguments:
    - ctx: Context map containing ::file-path
-   
+
    Returns:
    - Updated context with ::type added"
   [ctx]
-  (let [file-exists? (get ctx ::file-exists? (.exists (java.io.File. (::file-path ctx))))]
+  (let [file-exists?
+        (get ctx ::file-exists? (.exists (^[String] File/new (::file-path ctx))))]
     (assoc ctx ::type (if file-exists? "update" "create"))))
 
 (defn generate-diff
   "Generate diff between old and new content as a pipeline function.
    Uses the shell-based diff generator from utils.clj.
-   
+
    Arguments:
    - ctx: Context map containing ::old-content and ::output-source
-   
+
    Returns:
    - Updated context with ::diff added"
   [{:keys [::old-content ::output-source] :as ctx}]
@@ -502,7 +505,7 @@
 (defn update-file-timestamp
   "Updates the file timestamp after a successful edit.
    Uses the actual file modification time from the filesystem.
-   
+
    Requires ::file-path and ::nrepl-client-atom in context."
   [ctx]
   (let [file-path (::file-path ctx)
@@ -530,10 +533,10 @@
 ;; Format result for tool consumption
 (defn format-result
   "Format the result of the pipeline for tool consumption.
-   
+
    Arguments:
    - ctx: The final context map from the pipeline
-   
+
    Returns:
    - A map with :error, :message, and possibly :offsets and :result keys"
   [ctx]
@@ -550,7 +553,7 @@
 
 (defn edit-form-pipeline
   "Pipeline for handling Clojure form editing operations.
-   
+
    Arguments:
    - file-path: Path to the file to edit
    - form-name: Name of the form to edit (e.g., function name)
@@ -559,7 +562,7 @@
    - edit-type: Type of edit (:replace, :before, :after)
    - nrepl-client-atom: Atom containing the nREPL client (optional)
    - config: Optional tool configuration map
-   
+
    Returns a context map with the result of the operation"
   [file-path form-name form-type content-str edit-type {:keys [nrepl-client-atom] :as config}]
   (let [ctx {::file-path file-path
@@ -591,7 +594,7 @@
 
 (defn docstring-edit-pipeline
   "Pipeline for editing a docstring in a file.
-   
+
    Arguments:
    - file-path: Path to the file containing the form
    - form-name: Name of the form to edit
@@ -599,7 +602,7 @@
    - new-docstring: New docstring content
    - nrepl-client-atom: Atom containing the nREPL client (optional)
    - config: Optional tool configuration map
-   
+
    Returns:
    - A context map with the result of the operation"
   [file-path form-name form-type new-docstring {:keys [nrepl-client-atom] :as config}]
@@ -631,14 +634,14 @@
 
 (defn comment-block-edit-pipeline
   "Pipeline for editing a comment block in a file.
-   
+
    Arguments:
    - file-path: Path to the file containing the comment
    - comment-substring: Substring to identify the comment block
    - new-content: New content for the comment block
    - nrepl-client-atom: Atom containing the nREPL client (optional)
    - config: Optional tool configuration map
-   
+
    Returns:
    - A context map with the result of the operation"
   [file-path comment-substring new-content {:keys [nrepl-client-atom] :as config}]
@@ -678,7 +681,7 @@
       ctx)))
 
 (defn replace-sexp
-  [{:keys [::zloc ::match-form ::new-form ::replace-all ::whitespace-sensitive] :as ctx}]
+  [{:keys [::zloc ::match-form ::new-form ::replace-all] :as ctx}]
   (try
     (if-let [result (core/find-and-edit-multi-sexp
                      zloc
@@ -697,7 +700,7 @@
        ::message (str "Error replacing form: " (.getMessage e))})))
 
 (defn edit-sexp
-  [{:keys [::zloc ::match-form ::new-form ::operation ::replace-all ::whitespace-sensitive] :as ctx}]
+  [{:keys [::zloc ::match-form ::new-form ::operation ::replace-all] :as ctx}]
   (try
     (if-let [result (core/find-and-edit-multi-sexp
                      zloc
@@ -716,7 +719,7 @@
 
 (defn sexp-replace-pipeline
   "Pipeline for replacing s-expressions in a file.
-   
+
    Arguments:
    - file-path: Path to the file containing the forms
    - match-form: S-expression to find and replace
@@ -725,7 +728,7 @@
    - whitespace-sensitive: Whether to match forms exactly as written
    - nrepl-client-atom: Atom containing the nREPL client (optional)
    - config: Optional tool configuration map
-   
+
    Returns:
    - A context map with the result of the operation"
   [file-path match-form new-form replace-all whitespace-sensitive {:keys [nrepl-client-atom] :as config}]
@@ -756,7 +759,7 @@
 
 (defn sexp-edit-pipeline
   "Pipeline for editing s-expressions in a file with support for replace, insert-before, and insert-after operations.
-   
+
    Arguments:
    - file-path: Path to the file containing the forms
    - match-form: S-expression to find
@@ -765,7 +768,7 @@
    - replace-all: Whether to apply the operation to all occurrences
    - whitespace-sensitive: Whether to match forms exactly as written
    - config: Optional tool configuration map with nrepl-client-atom
-   
+
    Returns:
    - A context map with the result of the operation"
   [file-path match-form new-form operation replace-all whitespace-sensitive {:keys [nrepl-client-atom] :as config}]
@@ -823,7 +826,4 @@
     (comment-block-edit-pipeline "/path/to/file.clj"
                                  "test comment"
                                  ";; Updated comment"
-                                 {}))
-
-  (def outline-result
-    (file-outline-pipeline "/path/to/file.clj" [])))
+                                 {})))

@@ -1,6 +1,7 @@
 (ns clojure-mcp.tools.scratch-pad.smart-path-test
-  (:require [clojure.test :refer [deftest testing is]]
-            [clojure-mcp.tools.scratch-pad.smart-path :as sp]))
+  (:require [clojure-mcp.tools.scratch-pad.smart-path :as sp]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is testing]]))
 
 (deftest test-parse-positive-int
   (testing "parse-positive-int helper"
@@ -58,7 +59,7 @@
     (is (= {"count" 6}
            (sp/smart-update-in {"count" 5} ["count"] inc)))
     (is (= {"items" ["A" "b"]}
-           (sp/smart-update-in {"items" ["a" "b"]} ["items" "0"] clojure.string/upper-case)))))
+           (sp/smart-update-in {"items" ["a" "b"]} ["items" "0"] str/upper-case)))))
 
 (deftest test-smart-dissoc-in
   (testing "dissoc from vector"

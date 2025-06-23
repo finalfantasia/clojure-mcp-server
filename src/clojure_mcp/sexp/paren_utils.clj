@@ -1,10 +1,10 @@
 (ns clojure-mcp.sexp.paren-utils
   (:require
    [clojure-mcp.linting :as linting]
-   [rewrite-clj.parser :as parser]
+   [clojure.string :as string]
    [rewrite-clj.node :as node]
-   [clojure.string :as string])
-  (:import [com.oakmac.parinfer Parinfer]))
+   [rewrite-clj.parser :as parser])
+  (:import (com.oakmac.parinfer Parinfer)))
 
 ;; Tokenizer that breaks code into expressions and delimiter tokens
 (defn tokenize-code
@@ -43,7 +43,7 @@
   {:pre [(= :delimiter type) (open-delim value)]}
   (update x :value delim-map))
 
-(defn open-delim? [{:keys [type value] :as x}]
+(defn open-delim? [{:keys [type value] :as _x}]
   (when (= :delimiter type)
     (open-delim value)))
 
@@ -150,21 +150,21 @@
 
   ;; Test with complex case - both extra and missing parens
   (def code3 "(defn hello [name]
-  (str \"Hello\" name))) 
-(defn world [] 
-  (println \"World\")")
+  (str \"Hello\" name)))
+  (defn world []
+    (println \"World\")")
   (tokenize-code code3)
   (fix-parens (tokenize-code code3))
   (repair-parens code3)
   (repair-parens code3)
-  ;; => {:repaired? true, :form "(defn hello [name] (str \"Hello\" name)) (defn world [] (println \"World\"))", 
+  ;; => {:repaired? true, :form "(defn hello [name] (str \"Hello\" name)) (defn world [] (println \"World\"))",
   ;;     :message "Removed 1 extra closing parentheses and added 1 missing closing parentheses"}
 
   ;; Test with parens in string
   (def code4 "(println \"Hello (world)\")")
   (tokenize-code code4)
   (fix-parens (tokenize-code code4))
-  (repair-parens code4)
+  (repair-parens code4))
 
   ;; => {:repaired? false, :form "(println \"Hello (world)\")", :message "No repair needed"}
-  )
+

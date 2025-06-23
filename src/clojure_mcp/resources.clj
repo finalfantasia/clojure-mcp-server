@@ -1,12 +1,5 @@
 (ns clojure-mcp.resources
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
-            [clojure.data.json :as json]
-            [clojure.edn :as edn]
-            [clojure-mcp.nrepl :as mcp-nrepl]
-            [clojure-mcp.config :as config] ; Added config require
-            [clojure-mcp.tools.project.core :as project])
-  (:import [io.modelcontextprotocol.spec McpSchema$Resource McpSchema$ReadResourceResult]))
+  (:require [clojure.java.io :as io]))
 
 (defn read-file [full-path]
   (let [file (io/file full-path)]
@@ -45,7 +38,7 @@
    Accepts nrepl-client-atom for consistency with create-file-resource, but doesn't use it.
 
    :contents should be a vector of strings"
-  [url name description mime-type contents & [nrepl-client-atom]]
+  [url name description mime-type contents]
   {:url url
    :name name
    :description description

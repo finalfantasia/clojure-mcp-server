@@ -1,8 +1,8 @@
 (ns clojure-mcp.tools.file-edit.core-test
-  (:require [clojure.test :refer :all]
-            [clojure-mcp.tools.file-edit.core :as core]
+  (:require [clojure-mcp.tools.file-edit.core :as core]
             [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is testing use-fixtures]]))
 
 ;; Dynamic variables for test directories and files
 (def ^:dynamic *test-dir* nil)
@@ -11,20 +11,20 @@
 
 ;; Test fixture to create and cleanup test files/directories
 (defn create-test-files-fixture [f]
-  (let [tmp-dir (io/file (System/getProperty "java.io.tmpdir") 
-                        (str "file-edit-test-" (System/currentTimeMillis)))
+  (let [tmp-dir (io/file (System/getProperty "java.io.tmpdir")
+                         (str "file-edit-test-" (System/currentTimeMillis)))
         test-file (io/file tmp-dir "test-file.txt")
         test-nested-dir (io/file tmp-dir "nested")]
-    
+
     ;; Create test directory and file
     (.mkdirs tmp-dir)
     (spit test-file "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\n")
-    
+
     ;; Bind dynamic vars for the test
     (binding [*test-dir* tmp-dir
               *test-file* test-file
               *test-nested-dir* test-nested-dir]
-      
+
       ;; Run the test
       (try
         (f)
@@ -45,7 +45,7 @@
     (let [result (core/load-file-content (.getAbsolutePath *test-file*))]
       (is (not (:error result)) "Should not have error when file exists")
       (is (= "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\n" (:content result)) "Content should match file")))
-  
+
   (testing "Loading non-existent file content"
     (let [result (core/load-file-content (.getAbsolutePath (io/file *test-dir* "nonexistent.txt")))]
       (is (:error result) "Should have error when file doesn't exist")
@@ -61,56 +61,56 @@
 
 (deftest validate-file-edit-test
   (testing "Validation with identical strings"
-    (let [result (core/validate-file-edit 
+    (let [result (core/validate-file-edit
                   (.getAbsolutePath *test-file*)
                   "Line 3"
                   "Line 3"
                   "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\n")]
       (is (not (:valid result)) "Should be invalid when strings are identical")
       (is (string? (:message result)) "Should include error message")))
-  
+
   (testing "Validation for empty old_string (attempt to create new file)"
-    (let [result (core/validate-file-edit 
+    (let [result (core/validate-file-edit
                   (.getAbsolutePath (io/file *test-nested-dir* "new-file.txt"))
                   ""
                   "New content"
                   nil)]
       (is (not (:valid result)) "Should be invalid when using empty old_string")
       (is (str/includes? (:message result) "Empty old_string is not supported") "Should direct to file_write instead")))
-  
+
   (testing "Validation for empty old_string with existing file"
-    (let [result (core/validate-file-edit 
+    (let [result (core/validate-file-edit
                   (.getAbsolutePath *test-file*)
                   ""
                   "New content"
                   "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\n")]
       (is (not (:valid result)) "Should be invalid when using empty old_string")
       (is (str/includes? (:message result) "Empty old_string is not supported") "Should direct to file_write instead")))
-  
+
   (testing "Validation for non-existent file"
-    (let [result (core/validate-file-edit 
+    (let [result (core/validate-file-edit
                   (.getAbsolutePath (io/file *test-dir* "nonexistent.txt"))
                   "Line 3"
                   "Line 3 - EDITED"
                   nil)]
       (is (not (:valid result)) "Should be invalid when file doesn't exist")
       (is (string? (:message result)) "Should include error message")))
-  
+
   (testing "Validation for non-matching string"
-    (let [result (core/validate-file-edit 
+    (let [result (core/validate-file-edit
                   (.getAbsolutePath *test-file*)
                   "Not in file"
                   "Replacement"
                   "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\n")]
       (is (not (:valid result)) "Should be invalid when string not found")
       (is (string? (:message result)) "Should include error message")))
-  
+
   (testing "Validation for non-unique match"
     (let [test-content "Line\nLine\nLine\nLine\n"
           duplicate-file (io/file *test-dir* "duplicate.txt")]
       (spit duplicate-file test-content)
       (try
-        (let [result (core/validate-file-edit 
+        (let [result (core/validate-file-edit
                       (.getAbsolutePath duplicate-file)
                       "Line"
                       "Edited Line"
@@ -118,12 +118,12 @@
           (is (not (:valid result)) "Should be invalid for non-unique match")
           (is (string? (:message result)) "Should include error message")
           (is (str/includes? (:message result) "4 matches") "Should mention match count"))
-        (finally 
+        (finally
           (when (.exists duplicate-file)
             (.delete duplicate-file))))))
-  
+
   (testing "Validation for valid edit"
-    (let [result (core/validate-file-edit 
+    (let [result (core/validate-file-edit
                   (.getAbsolutePath *test-file*)
                   "Line 3"
                   "Line 3 - EDITED"
@@ -134,7 +134,6 @@
   (testing "Perform edit on existing file"
     (let [content "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\n"
           result (core/perform-file-edit
-                  (.getAbsolutePath *test-file*)
                   "Line 3"
                   "Line 3 - EDITED"
                   content)]
@@ -146,14 +145,14 @@
           result (core/save-file-content (.getAbsolutePath *test-file*) new-content)]
       (is (:success result) "Save should succeed")
       (is (= new-content (slurp *test-file*)) "File content should be updated")))
-  
+
   (testing "Create parent directories and save"
     (let [nested-file (io/file *test-nested-dir* "deep/path/new-file.txt")
           result (core/save-file-content (.getAbsolutePath nested-file) "New nested content")]
       (is (:success result) "Save should succeed")
       (is (.exists nested-file) "File should be created")
       (is (= "New nested content" (slurp nested-file)) "File content should match")
-      
+
       ;; Clean up created directories
       (.delete nested-file)
       (.delete (.getParentFile nested-file))

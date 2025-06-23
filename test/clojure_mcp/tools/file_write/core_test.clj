@@ -1,11 +1,11 @@
 (ns clojure-mcp.tools.file-write.core-test
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures]]
    [clojure-mcp.config :as config]
    [clojure-mcp.tools.file-write.core :as file-write-core]
    [clojure-mcp.tools.test-utils :as test-utils]
    [clojure.java.io :as io]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing use-fixtures]]))
 
 ;; Setup test fixtures
 (def ^:dynamic *test-dir* nil)
@@ -71,7 +71,6 @@
 
   (testing "Updating an existing text file"
     (let [path (.getPath *test-txt-file*)
-          original-content (slurp *test-txt-file*)
           new-content "This is updated content.\nWith new lines."
           result (file-write-core/write-text-file path new-content)]
       (is (not (:error result)))

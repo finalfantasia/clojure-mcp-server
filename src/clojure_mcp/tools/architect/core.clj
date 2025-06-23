@@ -1,19 +1,18 @@
 (ns clojure-mcp.tools.architect.core
   "Core implementation for the architect tool.
    This namespace contains the pure functionality without any MCP-specific code."
-  (:require [clojure.data.json :as json]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [clojure-mcp.agent.langchain :as chain]
-            [clojure-mcp.tools.unified-read-file.tool :as read-file-tool]
-            [clojure-mcp.tools.directory-tree.tool :as directory-tree-tool]
-            [clojure-mcp.tools.grep.tool :as grep-tool]
-            [clojure-mcp.tools.glob-files.tool :as glob-files-tool]
-            [clojure-mcp.tools.project.tool :as project-tool]
-            [clojure-mcp.tools.think.tool :as think-tool]
-            #_[clojure-mcp.tools.scratch-pad.tool :as scratch-pad-tool])
+  (:require
+   [clojure-mcp.agent.langchain :as chain]
+   [clojure-mcp.tools.directory-tree.tool :as directory-tree-tool]
+   [clojure-mcp.tools.glob-files.tool :as glob-files-tool]
+   [clojure-mcp.tools.grep.tool :as grep-tool]
+   [clojure-mcp.tools.project.tool :as project-tool]
+   [clojure-mcp.tools.think.tool :as think-tool]
+   [clojure-mcp.tools.unified-read-file.tool :as read-file-tool]
+   [clojure.string :as string]
+   [clojure.tools.logging :as log])
   (:import
-   [clojure_mcp.agent.langchain AiService]))
+   (clojure_mcp.agent.langchain AiService)))
 
 (declare system-message)
 

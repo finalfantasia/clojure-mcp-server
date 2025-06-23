@@ -1,10 +1,10 @@
 (ns clojure-mcp.other-tools.symbol.core-test
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures]]
+   [clojure-mcp.nrepl]
    [clojure-mcp.other-tools.symbol.core :as sut]
-   [clojure-mcp.nrepl :as nrepl]
-   [nrepl.server :as nrepl-server]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing use-fixtures]]
+   [nrepl.server]))
 
 ;; Use the common test utils for nREPL server setup
 (defonce ^:dynamic *nrepl-server* nil)
@@ -67,7 +67,7 @@
           result (sut/get-symbol-documentation client "map")]
       (is (map? result))
       (is (sequential? (:arglists result)))
-      (is (not (empty? (:arglists result))))
+      (is (seq (:arglists result)))
       (is (string? (:doc result)))
       (is (str/includes? (:doc result) "Returns a lazy"))
       (is (false? (:error result)))))

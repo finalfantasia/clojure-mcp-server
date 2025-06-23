@@ -1,8 +1,8 @@
 (ns clojure-mcp.utils.diff-test
   (:require
-   [clojure.test :refer [deftest is testing run-tests]]
+   [clojure-mcp.utils.diff :as diff]
    [clojure.string :as str]
-   [clojure-mcp.utils.diff :as diff]))
+   [clojure.test :refer [deftest is testing run-tests]]))
 
 (deftest test-generate-unified-diff-basic
   (testing "Basic unified diff generation"
@@ -24,8 +24,7 @@
       (is (or (empty? result)
               (and (str/includes? result "--- original.txt")
                    (str/includes? result "+++ revised.txt")
-                   (not (str/includes? result "@@ ")) ; No diff hunks
-                   ))
+                   (not (str/includes? result "@@ ")))) ; No diff hunks
           "Should indicate no differences or be empty"))))
 
 (deftest test-generate-unified-diff-empty-strings
@@ -165,5 +164,4 @@
   (diff/generate-unified-diff
    "Line 1\nLine 2\nLine 3\nLine 4\nLine 5"
    "Line 1\nModified Line 2\nLine 3\nLine 4\nLine 5"
-   1) ; Only 1 context line
-  )
+   1)) ; Only 1 context line

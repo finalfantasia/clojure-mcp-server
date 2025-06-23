@@ -1,14 +1,12 @@
 (ns clojure-mcp.nrepl
   (:require
-   [clojure.string :as string]
+   [clojure.edn]
    [clojure.main]
+   [clojure.tools.logging :as log]
    [nrepl.core :as nrepl]
    [nrepl.misc :as nrepl.misc]
-   [nrepl.transport]
-   [clojure.tools.logging :as log]
-   [clojure.edn])
-  (:import
-   [java.util.concurrent LinkedBlockingQueue TimeUnit]))
+   [nrepl.transport])
+  (:import (java.io IOException)))
 
 ;; callback system
 (defn add-callback! [{:keys [::state]} id f]
@@ -23,16 +21,16 @@
 (defn remove-current-eval-id! [{:keys [::state]}]
   (swap! state dissoc :current-eval-id))
 
-(defn dispatch-response! [{:keys [::state] :as service} msg]
+(defn dispatch-response! [{:keys [::state] :as _service} msg]
   (doseq [f (vals (get @state :id-callbacks))]
     (f msg)))
 
 ;; message callback-api
 (defn new-id [] (nrepl.misc/uuid))
 
-(defn select-key [key shouldbe k]
+(defn select-key [key should-be k]
   (fn [msg]
-    (when (= (get msg key) shouldbe)
+    (when (= (get msg key) should-be)
       (k msg))))
 
 (defn on-key [key callback k]
@@ -90,18 +88,18 @@
 ;; session state management in general is getting a little messy
 ;; parallel evals seem possible
 (defn ns-session
-  "returns session for when the use wants to temporarily change to a ns
-  All requests to this session are intended to have the ns declared."
+  "returns session for when the use wants to temporarily change to a ns.
+   All requests to this session are intended to have the ns declared."
   [{:keys [::state]}]
   (get @state :ns-session))
 
 (defn current-ns
-  ([{:keys [::state] :as service} session]
+  ([{:keys [::state] :as _service} session]
    (get-in @state [:current-ns session]))
-  ([{:keys [::state] :as service} session new-ns]
+  ([{:keys [::state] :as _service} session new-ns]
    (swap! state assoc-in [:current-ns session] new-ns)))
 
-(defn new-message [{:keys [::state] :as service} msg]
+(defn new-message [service msg]
   (merge
    {:session (eval-session service)
     :id (new-id)}
@@ -116,7 +114,7 @@
 (def truncation-length 10000) ;; 20000 roughly 250 lines
 
 (defn eval-code-msg
-  [{:keys [::state] :as service} code-str msg' k]
+  [service code-str msg' k]
   (let [msg (merge
              msg'
              {:op "eval"
@@ -155,7 +153,7 @@
        (new-message service {:op "interrupt" :interrupt-id current-eval-id})
        identity))))
 
-(defn lookup [{:keys [::state] :as service} symbol]
+(defn lookup [service symbol]
   (let [prom (promise)]
     (send-msg! service
                (new-tool-message service {:op "lookup" :sym symbol})
@@ -167,7 +165,7 @@
                                             (update :arglists clojure.edn/read-string))))))
     (deref prom 400 nil)))
 
-(defn completions [{:keys [::state] :as service} prefix]
+(defn completions [service prefix]
   (let [prom (promise)]
     (send-msg! service
                (new-tool-message service {:op "completions" :prefix prefix})
@@ -183,7 +181,7 @@
                     (value #(deliver prom %))))
     (deref prom 400 nil)))
 
-(defn ls-middleware [{:keys [::state] :as service}]
+(defn ls-middleware [service]
   (let [prom (promise)]
     (send-msg! service
                (new-tool-message service {:op "ls-middleware"})
@@ -208,7 +206,7 @@
                     (done #(deliver prom (get % :new-session)))))
     (deref prom 600 nil)))
 
-(defn send-input [{:keys [::state] :as service} input]
+(defn send-input [service input]
   (send-msg! service
              (new-message service {:op "stdin" :stdin (when input
                                                         (str input "\n"))})
@@ -222,19 +220,18 @@
 
 (declare create)
 
-(defn poll-for-responses [{:keys [::state] :as options} conn]
+(defn poll-for-responses [{:keys [::state] :as options}]
   (let [retries (atom 60)]
     (loop []
       (when (polling? options)
         (let [continue
               (try
-                (when-let [{:keys [id out err value ns session] :as resp}
-                           (nrepl.transport/recv (:conn @state) 100)]
+                (when-let [resp (nrepl.transport/recv (:conn @state) 100)]
                   (reset! retries 60)
                   #_(tap> resp)
                   (dispatch-response! options resp))
                 :success
-                (catch java.io.IOException e
+                (catch IOException e
                   (log/error e "nREPL connection failure 1")
                   :retry)
                 (catch Throwable e
@@ -245,7 +242,7 @@
             (= :retry continue)
             (if (< 0 @retries)
               (do (Thread/sleep 1000)
-                  (log/info (str "nRPEL Trying to reconnect to " (:port options)))
+                  (log/info (str "nREPL trying to reconnect to " (:port options)))
                   (try
                     (create options)
                     (catch Exception e
@@ -257,7 +254,7 @@
             (recur)))))))
 
 (defn start-polling [{:keys [::state] :as service}]
-  (let [response-poller (Thread. ^Runnable (bound-fn [] (poll-for-responses service (:conn @state))))]
+  (let [response-poller (Thread. ^Runnable (bound-fn [] (poll-for-responses service)))]
     (swap! state assoc :response-poller response-poller)
     (doto ^Thread response-poller
       (.setName "Rebel Readline nREPL response poller")
@@ -272,7 +269,7 @@
          client (nrepl/client conn Long/MAX_VALUE)
          session (nrepl/new-session client)
          tool-session (nrepl/new-session client)
-         ;; ns-session always has an ns declared in evals
+         ;; ns-session always has a ns declared in evals
          ns-session (nrepl/new-session client)
          state (::state config (atom {}))]
      (swap! state assoc

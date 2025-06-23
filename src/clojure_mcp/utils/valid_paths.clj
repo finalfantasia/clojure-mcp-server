@@ -1,16 +1,16 @@
 (ns clojure-mcp.utils.valid-paths
-  (:require [clojure.string :as str]
+  (:require [clojure-mcp.config :as config]
             [clojure.java.io :as io]
-            [clojure-mcp.config :as config]))
+            [clojure.string :as str]))
 
 (defn validate-path
   "Validates that a path is within allowed directories.
-   
+
    Parameters:
    - path: The path to validate (can be relative or absolute)
    - current-working-directory: The absolute path of the current working directory
    - allowed-directories: A sequence of absolute paths representing allowed directories
-   
+
    Returns:
    - The normalized absolute path if valid
    - Throws an exception if the path is not within any allowed directory"
@@ -60,11 +60,11 @@
 
 (defn validate-path-with-client
   "Validates a path using settings from the nrepl-client.
-   
+
    Parameters:
    - path: The path to validate (can be relative or absolute)
    - nrepl-client-map: The nREPL client map (dereferenced atom)
-   
+
    Returns:
    - The normalized absolute path if valid
    - Throws an exception if the path is invalid or if required settings are missing"
@@ -84,7 +84,7 @@
 
 (defn clojure-file?
   "Checks if a file path has a Clojure-related extension.
-   
+
    Supported extensions:
    - .clj (Clojure)
    - .cljs (ClojureScript)
@@ -103,30 +103,30 @@
 
 (defn extract-paths-from-bash-command
   "Extract file/directory paths from a bash command string.
-   
+
    Returns a set of path strings that the command might access.
    Only extracts paths that look like filesystem paths:
    - Absolute paths: /path/to/file
-   - Relative paths: ./file, ../dir/file  
+   - Relative paths: ./file, ../dir/file
    - Home directory: ~/file
    - Current/parent directory: . or ..
    - Quoted paths with spaces: '/path with spaces'
-   
-   Avoids false positives like search patterns in quotes, 
+
+   Avoids false positives like search patterns in quotes,
    regex patterns, URLs, etc.
-   
+
    Examples:
      (extract-paths-from-bash-command \"ls /usr/bin\")
      => #{\"usr/bin\"}
-     
+
      (extract-paths-from-bash-command \"find . -name '*.clj'\")
      => #{\".\"}
-     
+
      (extract-paths-from-bash-command \"echo 'not/a/path'\")
      => #{}"
   [command]
   (when-not (str/blank? command)
-    (let [;; Regex patterns for different path types  
+    (let [;; Regex patterns for different path types
           absolute-pattern #"(?<=\s|^)/[^\s\"'`;<>|&]+(?=\s|$)" ; /path/to/file
           relative-pattern #"(?<=\s|^)\.{1,2}/[^\s\"'`;<>|&]*(?=\s|$)" ; ./file ../dir
           home-pattern #"(?<=\s|^)~/[^\s\"'`;<>|&]*(?=\s|$)" ; ~/file
@@ -153,11 +153,11 @@
 
 (defn preprocess-path
   "Preprocess a path extracted from a bash command for validation.
-   
+
    Handles:
-   - Home directory expansion: ~/file -> /home/user/file  
+   - Home directory expansion: ~/file -> /home/user/file
    - Leaves other paths unchanged for validate-path to handle
-   
+
    Examples:
      (preprocess-path \"~/config\") => \"/home/user/config\"
      (preprocess-path \"./file\") => \"./file\""
@@ -176,22 +176,22 @@
 
 (defn validate-bash-command-paths
   "Extract and validate all filesystem paths from a bash command.
-   
+
    This function combines path extraction, preprocessing, and validation
    to ensure a bash command only accesses allowed directories.
-   
+
    Parameters:
-   - command: The bash command string to analyze  
+   - command: The bash command string to analyze
    - current-working-directory: The current working directory (absolute path)
    - allowed-directories: Sequence of allowed directory paths
-   
+
    Returns:
    - Set of normalized absolute paths if all paths are valid
    - Empty set if no paths found in command (command is safe)
-   
+
    Throws:
    - Exception if any path is invalid, with details about failed paths
-   
+
    Examples:
      (validate-bash-command-paths \"ls ./src /tmp\" \"/home/user\" [\"/home/user\" \"/tmp\"])
      => #{absolute-path-to-src absolute-path-to-tmp}"

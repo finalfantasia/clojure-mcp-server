@@ -1,7 +1,8 @@
 (ns clojure-mcp.other-tools.list-directory.core-test
-  (:require [clojure.test :refer :all]
-            [clojure-mcp.other-tools.list-directory.core :as sut]
-            [clojure.java.io :as io]))
+  (:require
+   [clojure-mcp.other-tools.list-directory.core :as sut]
+   [clojure.java.io :as io]
+   [clojure.test :refer [deftest is testing]]))
 
 (deftest list-directory-test
   (testing "list-directory lists files and directories correctly"

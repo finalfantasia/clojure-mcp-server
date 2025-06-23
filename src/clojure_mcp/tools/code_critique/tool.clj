@@ -1,10 +1,10 @@
 (ns clojure-mcp.tools.code-critique.tool
   "Implementation of the code critique tool using the tool-system multimethod approach."
   (:require
-   [clojure-mcp.tool-system :as tool-system]
-   [clojure-mcp.tools.code-critique.core :as core]
    [clojure-mcp.linting :as linting]
-   [clojure-mcp.sexp.paren-utils :as paren-utils]))
+   [clojure-mcp.sexp.paren-utils :as paren-utils]
+   [clojure-mcp.tool-system :as tool-system]
+   [clojure-mcp.tools.code-critique.core :as core]))
 
 ;; Factory function to create the tool configuration
 (defn create-code-critique-tool

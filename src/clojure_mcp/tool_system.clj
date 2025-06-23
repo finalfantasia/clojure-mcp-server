@@ -1,12 +1,12 @@
 (ns clojure-mcp.tool-system
   "Core system for defining and registering MCP tools.
-   This namespace provides multimethods for implementing tools 
+   This namespace provides multimethods for implementing tools
    in a modular, extensible way."
   (:require
    [clojure.string :as string]
-   [clojure.walk :as walk]
    [clojure.tools.logging :as log]
-   [clojure.data.json :as json]))
+   [clojure.walk :as walk])
+  (:import (java.util List Map Set)))
 
 ;; Core multimethods for tool behavior
 
@@ -32,29 +32,29 @@
   "Validates inputs against the schema and returns validated/coerced inputs.
    Throws exceptions for invalid inputs.
    Dispatches on :tool-type in the tool-config."
-  (fn [tool-config inputs] (:tool-type tool-config)))
+  (fn [tool-config _inputs] (:tool-type tool-config)))
 
 (defmulti execute-tool
   "Executes the tool with the validated inputs and returns the result.
    Dispatches on :tool-type in the tool-config."
-  (fn [tool-config inputs] (:tool-type tool-config)))
+  (fn [tool-config _inputs] (:tool-type tool-config)))
 
 (defmulti format-results
   "Formats the results from tool execution into the expected MCP response format.
    Must return a map with :result (a vector or sequence of strings) and :error (boolean).
    The MCP protocol requires that results are always provided as a sequence of strings,
    never as a single string.
-   
+
    This standardized format is then used by the tool-fn to call the callback with:
    (callback (:result formatted) (:error formatted))
-   
+
    Dispatches on :tool-type in the tool-config."
-  (fn [tool-config result] (:tool-type tool-config)))
+  (fn [tool-config _result] (:tool-type tool-config)))
 
 ;; Multimethod to assemble the registration map
 
 (defmulti registration-map
-  "Creates the MCP registration map for a tool. 
+  "Creates the MCP registration map for a tool.
    Dispatches on :tool-type."
   :tool-type)
 
@@ -65,9 +65,9 @@
   (clojure.walk/prewalk
    (fn [node]
      (cond
-       (instance? java.util.Map node) (into {} node)
-       (instance? java.util.List node) (into [] node)
-       (instance? java.util.Set node) (into #{} node)
+       (instance? Map node) (into {} node)
+       (instance? List node) (into [] node)
+       (instance? Set node) (into #{} node)
        :else node))
    x))
 
@@ -115,7 +115,7 @@
   (def client-atom (atom (nrepl/create {:port 7888})))
   (nrepl/start-polling @client-atom)
 
-  ;; Create a tool instance 
+  ;; Create a tool instance
   (def eval-tool-instance (eval-tool/create-eval-tool client-atom))
 
   ;; Generate the registration map with our debug println statements
@@ -124,7 +124,7 @@
   ;; Get the tool-fn
   (def tool-fn (:tool-fn reg-map))
 
-  ;; Test it directly with string keys (like it would receive from MCP) 
+  ;; Test it directly with string keys (like it would receive from MCP)
   (tool-fn nil {"code" "(+ 1 2)"}
            (fn [result error] (println "RESULT:" result "ERROR:" error)))
 

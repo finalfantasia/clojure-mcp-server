@@ -1,15 +1,15 @@
 (ns clojure-mcp.config.write-file-guard-test
   "Tests for the write-file-guard configuration option"
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures]]
    [clojure-mcp.config :as config]
-   [clojure-mcp.tools.file-write.tool :as file-write-tool]
-   [clojure-mcp.tools.unified-read-file.tool :as unified-read-file-tool]
-   [clojure-mcp.tools.file-edit.tool :as file-edit-tool]
-   [clojure-mcp.tools.unified-read-file.file-timestamps :as file-timestamps]
    [clojure-mcp.tool-system :as tool-system]
+   [clojure-mcp.tools.file-edit.tool :as file-edit-tool]
+   [clojure-mcp.tools.file-write.tool :as file-write-tool]
+   [clojure-mcp.tools.unified-read-file.file-timestamps :as file-timestamps]
+   [clojure-mcp.tools.unified-read-file.tool :as unified-read-file-tool]
    [clojure.java.io :as io]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing use-fixtures]]))
 
 ;; Test fixture setup
 (def ^:dynamic *test-dir* nil)
@@ -40,32 +40,37 @@
 (use-fixtures :each create-test-fixture)
 
 ;; Helper functions
-(defn set-write-file-guard! [mode]
+(defn set-write-file-guard!
   "Set the write-file-guard configuration"
+  [mode]
   (config/set-config! *test-client-atom* :write-file-guard mode))
 
-(defn create-test-file! [filename content]
+(defn create-test-file!
   "Create a test file with the given content"
+  [filename content]
   (let [file-path (str (.getCanonicalPath *test-dir*) "/" filename)]
     (spit file-path content)
     file-path))
 
-(defn read-file-collapsed! [file-path]
+(defn read-file-collapsed!
   "Perform a collapsed read using unified-read-file tool"
+  [file-path]
   (let [tool-config (unified-read-file-tool/create-unified-read-file-tool *test-client-atom*)
         inputs {:path file-path :collapsed true}
         validated (tool-system/validate-inputs tool-config inputs)]
     (tool-system/execute-tool tool-config validated)))
 
-(defn read-file-full! [file-path]
+(defn read-file-full!
   "Perform a full read using unified-read-file tool"
+  [file-path]
   (let [tool-config (unified-read-file-tool/create-unified-read-file-tool *test-client-atom*)
         inputs {:path file-path :collapsed false}
         validated (tool-system/validate-inputs tool-config inputs)]
     (tool-system/execute-tool tool-config validated)))
 
-(defn edit-file! [file-path old-string new-string]
+(defn edit-file!
   "Attempt to edit a file using file-edit tool"
+  [file-path old-string new-string]
   (let [tool-config (file-edit-tool/create-file-edit-tool *test-client-atom*)
         inputs {:file_path file-path :old_string old-string :new_string new-string}]
     (try
@@ -80,8 +85,9 @@
         (println "Edit failed with exception:" (.getMessage e))
         {:success false :error (.getMessage e)}))))
 
-(defn write-file! [file-path content]
+(defn write-file!
   "Attempt to write a file using file-write tool"
+  [file-path content]
   (let [tool-config (file-write-tool/create-file-write-tool *test-client-atom*)]
     (try
       (let [validated (tool-system/validate-inputs tool-config

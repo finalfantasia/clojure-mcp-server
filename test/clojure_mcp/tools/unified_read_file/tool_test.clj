@@ -1,11 +1,11 @@
 (ns clojure-mcp.tools.unified-read-file.tool-test
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures]]
+   [clojure-mcp.config :as config]
+   [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.tools.test-utils :as test-utils :refer [*nrepl-client-atom*]]
    [clojure-mcp.tools.unified-read-file.tool :as unified-read-file-tool]
-   [clojure-mcp.tool-system :as tool-system]
-   [clojure-mcp.config :as config]
-   [clojure.java.io :as io]))
+   [clojure.java.io :as io]
+   [clojure.test :refer [deftest is testing use-fixtures]]))
 
 ;; Setup test fixtures
 (test-utils/apply-fixtures *ns*)

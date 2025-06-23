@@ -1,10 +1,9 @@
 (ns clojure-mcp.other-tools.list-directory.tool
   "Implementation of the list-directory tool using the tool-system multimethod approach."
   (:require
-   [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.other-tools.list-directory.core :as core]
-   [clojure-mcp.utils.valid-paths :as valid-paths]
-   [clojure.string :as str]))
+   [clojure-mcp.tool-system :as tool-system]
+   [clojure-mcp.utils.valid-paths :as valid-paths]))
 
 ;; Factory function to create the tool configuration
 (defn create-list-directory-tool

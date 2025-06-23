@@ -2,8 +2,8 @@
   "Core implementation for namespace-related tools.
    This namespace contains the pure functionality without any MCP-specific code."
   (:require
-   [clojure.string :as string]
-   [clojure-mcp.nrepl :as nrepl]))
+   [clojure-mcp.nrepl :as nrepl]
+   [clojure.string :as string]))
 
 (defn get-current-namespace
   "Returns the current namespace from the nREPL client's state.

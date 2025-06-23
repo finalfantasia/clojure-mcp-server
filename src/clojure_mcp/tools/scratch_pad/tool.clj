@@ -1,14 +1,14 @@
 (ns clojure-mcp.tools.scratch-pad.tool
   "Implementation of the scratch-pad tool using the tool-system multimethod approach."
   (:require
+   [clojure-mcp.config :as config]
    [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.tools.scratch-pad.core :as core]
-   [clojure.tools.logging :as log]
-   [clojure.walk :as walk]
-   [clojure.pprint :as pprint]
-   [clojure.java.io :as io]
    [clojure.edn :as edn]
-   [clojure-mcp.config :as config]))
+   [clojure.java.io :as io]
+   [clojure.pprint]
+   [clojure.tools.logging :as log]
+   [clojure.walk :as walk]))
 
 (defn get-scratch-pad
   "Gets the current scratch pad data from the nrepl-client.
@@ -78,7 +78,7 @@ THIS IS YOUR GO-TO TOOL FOR PLANNING.
 Your persistent workspace for planning, organizing thoughts, and maintaining state across tool invocations.
 
 This tool can be used to:
- * develop and track multi-step plans
+ * develop and track multistep plans
  * maintain task lists and task tracking
  * store intermediate results between operations
  * keep notes about your current approach or strategy
@@ -91,7 +91,7 @@ The scratch pad is for persistent storage and state management, not for formatti
 
 Use the scratch pad when you need to:
 - Track progress across multiple tool calls
-- Build data structures incrementally  
+- Build data structures incrementally
 - Maintain state between operations
 - Store intermediate results for later use
 
@@ -209,7 +209,7 @@ Viewing tasks:
                            :description "(Optional) For inspect operation: Maximum depth to display (default: 5). Must be a positive integer."}}
      :required ["op" "explanation"]}))
 
-(defmethod tool-system/validate-inputs :scratch-pad [{:keys [nrepl-client-atom]} inputs]
+(defmethod tool-system/validate-inputs :scratch-pad [_tool-config inputs]
   ;; convert set_path path nil -> delete_path path
   ;; this can prevent nil values from being in the data?
   (let [inputs (if (and
@@ -219,7 +219,7 @@ Viewing tasks:
                     (:path inputs))
                  (assoc inputs :op "delete_path")
                  inputs)
-        {:keys [op path value explanation depth enabled filename]} inputs]
+        {:keys [op path explanation depth]} inputs]
 
     ;; Check required parameters
     (when-not op
@@ -265,7 +265,8 @@ Viewing tasks:
       path (assoc :path (vec path))
       (and (= op "inspect") (nil? depth)) (assoc :depth 5))))
 
-(defmethod tool-system/execute-tool :scratch-pad [{:keys [nrepl-client-atom working-directory]} {:keys [op path value explanation depth enabled filename]}]
+(defmethod tool-system/execute-tool :scratch-pad
+  [{:keys [nrepl-client-atom]} {:keys [op path value explanation depth]}]
   (try
     (let [current-data (get-scratch-pad nrepl-client-atom)
           exec-result (case op
@@ -293,8 +294,8 @@ Viewing tasks:
       {:error true
        :result (str "Error executing scratch pad operation: " (.getMessage e))})))
 
-;; this is convoluted this can be stream lined as most of this is imply echoing back what was sent
-(defmethod tool-system/format-results :scratch-pad [_ {:keys [error message result explanation]}]
+;; this is convoluted this can be streamlined as most of this is implied echoing back what was sent
+(defmethod tool-system/format-results :scratch-pad [_ {:keys [error result]}]
   (if error
     {:result [result]
      :error true}
@@ -374,7 +375,7 @@ Viewing tasks:
 
 (defn scratch-pad-tool
   "Returns the registration map for the scratch pad tool.
-   
+
    Parameters:
    - nrepl-client-atom: Atom containing the nREPL client
    - working-directory: The working directory for file persistence"

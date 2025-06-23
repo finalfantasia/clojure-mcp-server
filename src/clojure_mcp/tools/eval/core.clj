@@ -2,8 +2,8 @@
   "Core implementation for the eval tool.
    This namespace contains the pure functionality without any MCP-specific code."
   (:require
-   [clojure-mcp.nrepl :as nrepl]
    [clojure-mcp.linting :as linting]
+   [clojure-mcp.nrepl :as nrepl]
    [clojure-mcp.sexp.paren-utils :as paren-utils]
    [clojure.string :as string]
    [clojure.tools.logging :as log]))
@@ -43,13 +43,13 @@
 
 (defn evaluate-code
   "Evaluates Clojure code using the nREPL client.
-   
+
    Parameters:
    - nrepl-client: The nREPL client to use for evaluation
    - opts: A map of options:
      - :code The Clojure code to evaluate as a string
      - :timeout_ms the timeout in milliseconds
-   
+
    Returns:
    - A map with :outputs (raw outputs), :error (boolean flag)"
   [nrepl-client opts]
@@ -122,9 +122,9 @@
 
 (defn evaluate-with-repair
   "Evaluates Clojure code with automatic repair of delimiter errors.
-   First attempts to repair any delimiter errors in the code, 
+   First attempts to repair any delimiter errors in the code,
    then evaluates the repaired code if successful.
-   
+
    Parameters:
    - nrepl-client: The nREPL client to use for evaluation
    - opts: A map of options:

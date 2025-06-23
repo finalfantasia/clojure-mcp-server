@@ -1,8 +1,8 @@
 (ns clojure-mcp.other-tools.create-directory.tool
   "Implementation of the create-directory tool using the tool-system multimethod approach."
   (:require
-   [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.other-tools.create-directory.core :as core]
+   [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.utils.valid-paths :as valid-paths]))
 
 ;; Factory function to create the tool configuration
@@ -42,7 +42,8 @@
     ;; Delegate to core implementation
     (core/create-directory path)))
 
-(defmethod tool-system/format-results :create-directory [_ {:keys [success error path exists created] :as result}]
+(defmethod tool-system/format-results :create-directory
+  [_ {:keys [success error path exists created] :as _result}]
   (if success
     ;; Success case
     {:result [(cond

@@ -1,14 +1,13 @@
 (ns clojure-mcp.tools.form-edit.sexp-replace-test
   (:require
-   [clojure.test :refer [deftest testing is use-fixtures]]
-   [clojure-mcp.tools.form-edit.tool :as sut]
-   [clojure-mcp.tools.form-edit.pipeline :as pipeline]
-   [clojure-mcp.tools.form-edit.core :as core]
-   [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.config :as config] ; Added config require
+   [clojure-mcp.tool-system :as tool-system]
+   [clojure-mcp.tools.form-edit.pipeline :as pipeline]
+   [clojure-mcp.tools.form-edit.tool :as sut]
    [clojure-mcp.tools.unified-read-file.file-timestamps :as file-timestamps]
    [clojure.java.io :as io]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing use-fixtures]]))
 
 ;; Test fixtures
 (def ^:dynamic *test-dir* nil)
@@ -67,8 +66,9 @@
 (defn get-file-path []
   (.getCanonicalPath *test-file*))
 
-(defn register-file-timestamp []
+(defn register-file-timestamp
   "Updates the timestamp for the test file to mark it as read."
+  []
   (let [file-path (get-file-path)]
     (file-timestamps/update-file-timestamp-to-current-mtime! *client-atom* file-path)
     ;; Small delay to ensure timestamps differ if modified

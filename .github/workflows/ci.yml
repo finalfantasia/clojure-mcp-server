@@ -2,31 +2,31 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 jobs:
-  test:
+  main:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
-    - name: Setup Java
+
+    - name: Set up Java
       uses: actions/setup-java@v4
       with:
-        distribution: 'temurin'
-        java-version: '21'
-        
-    - name: Setup Clojure
-      uses: DeLaGuardo/setup-clojure@12.5
+        distribution: temurin
+        java-version: 21
+
+    - name: Set up Clojure
+      uses: DeLaGuardo/setup-clojure@13.4
       with:
         cli: latest
-        
+
     - name: Cache Clojure dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.m2/repository
@@ -35,9 +35,18 @@ jobs:
         key: ${{ runner.os }}-clojure-${{ hashFiles('**/deps.edn') }}
         restore-keys: |
           ${{ runner.os }}-clojure-
-          
+
     - name: Install dependencies
-      run: clojure -P -M:test
-      
+      run: |
+        clojure -P -M:format/check
+        clojure -P -M:lint
+        clojure -P -M:test
+
+    - name: Lint
+      run: clojure -M:lint --config '{:output {:pattern "::{{level}} file={{filename}},line={{row}},col={{col}}::{{message}}"}}'
+
+    - name: Check format
+      run: clojure -M:format/check
+
     - name: Run tests
       run: clojure -M:test

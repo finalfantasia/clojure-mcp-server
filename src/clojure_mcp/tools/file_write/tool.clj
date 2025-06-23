@@ -1,11 +1,11 @@
 (ns clojure-mcp.tools.file-write.tool
   "Implementation of the file-write tool using the tool-system multimethod approach."
   (:require
+   [clojure-mcp.config :as config]
    [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.tools.file-write.core :as core]
    [clojure-mcp.tools.unified-read-file.file-timestamps :as file-timestamps]
    [clojure-mcp.utils.valid-paths :as valid-paths]
-   [clojure-mcp.config :as config]
    [clojure.java.io :as io]))
 
 ;; Factory function to create the tool configuration

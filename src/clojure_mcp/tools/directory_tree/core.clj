@@ -93,39 +93,40 @@
           (.append result (str (.getAbsolutePath dir) "\n")))
 
         ;; Process directories with special handling for no-recurse directories
-        (let [remaining-dirs (loop [remaining dirs]
-                               (if (or (empty? remaining) (>= @entry-count limit))
-                                 (count remaining)
-                                 (let [d (first remaining)]
-                                   (swap! entry-count inc)
-                                   (.append result (format-entry d indent true))
+        (let [remaining-dirs
+              (loop [remaining dirs]
+                (if (or (empty? remaining) (>= @entry-count limit))
+                  (count remaining)
+                  (let [d (first remaining)]
+                    (swap! entry-count inc)
+                    (.append result (format-entry d indent true))
 
-                                   (cond
-                                     ;; If it's a no-recurse directory, show note and don't recurse
-                                     (no-recurse-directory? d)
-                                     (.append result (str indent "    (not expanded)\n"))
+                    (cond
+                      ;; If it's a no-recurse directory, show note and don't recurse
+                      (no-recurse-directory? d)
+                      (.append result (str indent "    (not expanded)\n"))
 
-                                     ;; If max-depth is set and we're at the limit
-                                     (and max-depth (= depth max-depth))
-                                     (.append result (str indent "    ...\n"))
+                      ;; If max-depth is set and we're at the limit
+                      (and max-depth (= depth max-depth))
+                      (.append result (str indent "    ...\n"))
 
-                                     ;; Otherwise process subdirectory if we should continue
-                                     continue?
-                                     (let [subtree (directory-tree (.getAbsolutePath d)
-                                                                   :depth (inc depth)
-                                                                   :max-depth max-depth
-                                                                   :limit limit
-                                                                   :entry-count entry-count)]
-                                       (when (and subtree (not (map? subtree)) (not (empty? subtree)))
-                                         (let [subtree-lines (str/split-lines subtree)
-                                               indented-lines (map #(str indent "  " %) subtree-lines)]
-                                           (.append result (str (str/join "\n" indented-lines) "\n"))))))
+                      ;; Otherwise process subdirectory if we should continue
+                      continue?
+                      (let [subtree (directory-tree (.getAbsolutePath d)
+                                                    :depth (inc depth)
+                                                    :max-depth max-depth
+                                                    :limit limit
+                                                    :entry-count entry-count)]
+                        (when (and (seq subtree) (not (map? subtree)))
+                          (let [subtree-lines (str/split-lines subtree)
+                                indented-lines (map #(str indent "  " %) subtree-lines)]
+                            (.append result (str (str/join "\n" indented-lines) "\n"))))))
 
-                                   (recur (rest remaining)))))]
-          ;; Process files
-          (let [remaining-files (process-entries files result indent entry-count limit)]
-            ;; Add truncation message
-            (add-truncation-message result indent (+ remaining-dirs remaining-files))))
+                    (recur (rest remaining)))))
+              ;; Process files
+              remaining-files (process-entries files result indent entry-count limit)]
+          ;; Add truncation message
+          (add-truncation-message result indent (+ remaining-dirs remaining-files)))
 
         (.toString result))
       {:error (str path " is not a valid directory")})))

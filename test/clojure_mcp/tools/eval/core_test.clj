@@ -1,10 +1,10 @@
 (ns clojure-mcp.tools.eval.core-test
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures]]
-   [clojure-mcp.tools.eval.core :as eval-core]
    [clojure-mcp.nrepl :as nrepl]
-   [nrepl.server :as nrepl-server]
-   [clojure.string :as str]))
+   [clojure-mcp.tools.eval.core :as eval-core]
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing use-fixtures]]
+   [nrepl.server :as nrepl-server]))
 
 ;; Setup nREPL server for tests
 (defonce ^:dynamic *nrepl-server* nil)

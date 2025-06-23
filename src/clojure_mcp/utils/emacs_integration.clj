@@ -238,5 +238,4 @@
   (def file-path2 "tmp/test-file.clj")
   (save-emacs-buffer-if-modified file-path2)
   ;; Use ensure-auto-revert (now always async)
-  (ensure-auto-revert file-path)
-)
+  (ensure-auto-revert file-path))

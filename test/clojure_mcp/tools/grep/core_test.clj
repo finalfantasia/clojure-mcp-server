@@ -1,7 +1,7 @@
 (ns clojure-mcp.tools.grep.core-test
-  (:require [clojure.test :refer :all]
-            [clojure-mcp.tools.grep.core :as sut]
-            [clojure.java.io :as io]))
+  (:require [clojure-mcp.tools.grep.core :as sut]
+            [clojure.java.io :as io]
+            [clojure.test :refer [deftest is testing]]))
 
 (deftest grep-files-with-test-directory
   (testing "grep-files with controlled test directory"

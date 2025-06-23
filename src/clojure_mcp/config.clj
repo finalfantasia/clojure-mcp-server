@@ -1,8 +1,8 @@
 (ns clojure-mcp.config
   (:require
-   [clojure.java.io :as io]
    [clojure-mcp.dialects :as dialects]
    [clojure.edn :as edn]
+   [clojure.java.io :as io]
    [clojure.tools.logging :as log]))
 
 (defn- relative-to [dir path]
@@ -12,10 +12,13 @@
         (.getCanonicalPath f)
         (.getCanonicalPath (io/file dir path))))
     (catch Exception e
-      (log/warn "Bad file paths " (pr-str [dir path]))
+      (log/warn e "Bad file paths " (pr-str [dir path]))
       nil)))
 
-(defn process-config [{:keys [allowed-directories emacs-notify write-file-guard cljfmt bash-over-nrepl nrepl-env-type] :as config} user-dir]
+(defn process-config
+  [{:keys [allowed-directories emacs-notify write-file-guard cljfmt
+           bash-over-nrepl nrepl-env-type]
+    :as config} user-dir]
   (let [ud (io/file user-dir)]
     (assert (and (.isAbsolute ud) (.isDirectory ud)))
     (when (some? write-file-guard)
@@ -26,21 +29,27 @@
                              "- must be one of (:full-read, :partial-read, false)")
                         {:write-file-guard write-file-guard}))))
     (cond-> config
-      user-dir (assoc :nrepl-user-dir (.getCanonicalPath ud))
-      true
+      :always
       (assoc :allowed-directories
              (->> (cons user-dir allowed-directories)
                   (keep #(relative-to user-dir %))
                   distinct
                   vec))
-      (some? (:emacs-notify config))
-      (assoc :emacs-notify (boolean (:emacs-notify config)))
-      (some? (:cljfmt config))
-      (assoc :cljfmt (boolean (:cljfmt config)))
-      (some? (:bash-over-nrepl config))
-      (assoc :bash-over-nrepl (boolean (:bash-over-nrepl config)))
-      (some? (:nrepl-env-type config))
-      (assoc :nrepl-env-type (:nrepl-env-type config)))))
+
+      (some? user-dir)
+      (assoc :nrepl-user-dir (.getCanonicalPath ud))
+
+      (some? emacs-notify)
+      (assoc :emacs-notify (boolean emacs-notify))
+
+      (some? cljfmt)
+      (assoc :cljfmt (boolean cljfmt))
+
+      (some? bash-over-nrepl)
+      (assoc :bash-over-nrepl (boolean bash-over-nrepl))
+
+      (some? nrepl-env-type)
+      (assoc :nrepl-env-type nrepl-env-type))))
 
 (defn load-config
   "Loads configuration from .clojure-mcp/config.edn in the given directory.
@@ -190,5 +199,3 @@
    Uses set-config* to perform the actual update."
   [nrepl-client-atom k v]
   (swap! nrepl-client-atom set-config* k v))
-
-

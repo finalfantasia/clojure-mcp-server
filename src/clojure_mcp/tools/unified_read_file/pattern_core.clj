@@ -1,25 +1,26 @@
 (ns clojure-mcp.tools.unified-read-file.pattern-core
   "Enhanced pattern-based Clojure file exploration with reader conditional support and collapsed view.
-   
+
    Key features:
    - Pattern-based matching on form names and content
    - Collapsed view showing function signatures (e.g., (defn foo [x] ...))
    - Full support for reader conditionals (#? and #?@)
    - Platform-specific forms displayed with reader conditional syntax
    - String-based helper functions for easy REPL testing
-   
+
    Example output for platform-specific forms:
    #?(:clj
       (defn server-fn [] ...))
-   
+
    This makes it clear which forms are platform-specific without cluttering the form names."
   (:require
-   [rewrite-clj.zip :as z]
+   [clojure.string :as str]
    [rewrite-clj.node :as n]
-   [clojure.string :as str]))
+   [rewrite-clj.zip :as z])
+  (:import (rewrite_clj.node.seq SeqNode)))
 
 (defn seq-node? [node]
-  (instance? rewrite_clj.node.seq.SeqNode node))
+  (instance? SeqNode node))
 
 (defn node-tag [node]
   (try
@@ -224,7 +225,7 @@
           form-type (when (and (seq? sexpr) (symbol? (first sexpr)))
                       (name (first sexpr)))
           form-content (n/string node)
-          ;; If zloc is a reader-macro (happens with reader conditionals), 
+          ;; If zloc is a reader-macro (happens with reader conditionals),
           ;; create a proper zloc from the node inside
           actual-zloc (if (= :reader-macro (try (z/tag zloc) (catch Exception _ nil)))
                         (z/of-node node)
@@ -297,12 +298,12 @@
 (defn generate-collapsed-view*
   "Generates a collapsed view of Clojure code from a source string with pattern-based expansion.
    Forms matching the patterns are shown in full, others are collapsed.
-   
+
    Arguments:
    - source-str: The Clojure source code as a string
    - name-pattern: Regex pattern to match form names (optional)
    - content-pattern: Regex pattern to match form content (optional)
-   
+
    Returns:
    - A map with :view (the collapsed string) and :pattern-info"
   [source-str name-pattern content-pattern]
@@ -353,12 +354,12 @@
 (defn generate-collapsed-view
   "Generates a collapsed view of Clojure code with pattern-based expansion.
    Forms matching the patterns are shown in full, others are collapsed.
-   
+
    Arguments:
    - file-path: Path to the Clojure file
    - name-pattern: Regex pattern to match form names (optional)
    - content-pattern: Regex pattern to match form content (optional)
-   
+
    Returns:
    - A map with :view (the collapsed string) and :pattern-info"
   [file-path name-pattern content-pattern]
@@ -532,7 +533,7 @@
 
 #?@(:clj
     [(def server-config {:port 8080})
-     (defn start-server [] 
+     (defn start-server []
        (println \"Starting on\" (:port server-config)))]
     :cljs
     [(def client-config {:endpoint \"http://localhost:8080\"})
@@ -562,7 +563,7 @@
   ;; Test 9: Edge cases
   (def edge-case-source
     "(ns edge.cases)
-     
+
 ;; This is a comment
 (def ^:private secret \"Don't show\")
 

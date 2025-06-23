@@ -3,15 +3,15 @@
    This tool combines the functionality of fs_read_file and clojure_read_file into a single
    smart tool that automatically selects the appropriate mode based on file type."
   (:require
-   [clojure-mcp.tool-system :as tool-system]
-   [clojure-mcp.tools.unified-read-file.file-timestamps :as file-timestamps]
-   [clojure-mcp.utils.valid-paths :as valid-paths]
-   [clojure-mcp.tools.unified-read-file.pattern-core :as pattern-core]
-   [clojure-mcp.tools.unified-read-file.core :as core]
-   [clojure-mcp.file-content :as file-content]
    [clojure-mcp.config :as config]
-   [clojure.tools.logging :as log]
-   [clojure.string :as str]))
+   [clojure-mcp.file-content :as file-content]
+   [clojure-mcp.tool-system :as tool-system]
+   [clojure-mcp.tools.unified-read-file.core :as core]
+   [clojure-mcp.tools.unified-read-file.file-timestamps :as file-timestamps]
+   [clojure-mcp.tools.unified-read-file.pattern-core :as pattern-core]
+   [clojure-mcp.utils.valid-paths :as valid-paths]
+   [clojure.string :as str]
+   [clojure.tools.logging :as log]))
 
 ;; Factory function to create the tool configuration
 (defn create-unified-read-file-tool
@@ -42,11 +42,11 @@
 
 (defmethod tool-system/tool-description :unified-read-file [{:keys [max-lines max-line-length]}]
   (str "Smart file reader with pattern-based exploration for Clojure files.
-   
+
 For Clojure files (.clj, .cljc, .cljs, .bb, .lpy):
 
 This tool defaults to an expandable collapsed view to quickly grab the information you need from a Clojure file.
-If called without `name_pattern` or `content_pattern` it will return the file content where 
+If called without `name_pattern` or `content_pattern` it will return the file content where
 you will see only function signatures. This gives you a quick overview of the file.
 
 When you want to see more, this tool has a grep functionality where you
@@ -141,7 +141,7 @@ By default, reads up to " max-lines " lines, truncating lines longer than " max-
        :limit limit})))
 
 (defmethod tool-system/execute-tool :unified-read-file [{:keys [max-lines max-line-length nrepl-client-atom]} inputs]
-  (let [{:keys [path collapsed name_pattern content_pattern include_comments line_offset limit]} inputs
+  (let [{:keys [path collapsed name_pattern content_pattern line_offset limit]} inputs
         limit-val (or limit max-lines)
         is-clojure-file (collapsible-clojure-file? path)
         ;; Get write-file-guard config if we have the atom
@@ -219,7 +219,7 @@ By default, reads up to " max-lines " lines, truncating lines longer than " max-
 (defn format-clojure-view
   "Formats Clojure file view with markdown and usage advice."
   [content path pattern-info]
-  (let [{:keys [name-pattern content-pattern match-count total-forms expanded-forms collapsed-forms]} pattern-info
+  (let [{:keys [name-pattern content-pattern total-forms expanded-forms collapsed-forms]} pattern-info
         pattern-text (cond
                        (and name-pattern content-pattern)
                        (str "name_pattern: \"" name-pattern "\" and content_pattern: \"" content-pattern "\"")
@@ -252,8 +252,8 @@ By default, reads up to " max-lines " lines, truncating lines longer than " max-
 
 (defn format-raw-file
   "Formats raw file content with markdown."
-  [result max-lines]
-  (let [{:keys [content path size line-count offset truncated? line-lengths-truncated?]} result
+  [result]
+  (let [{:keys [content path size line-count truncated?]} result
         file-type (last (str/split path #"\."))
         lang-hint (when file-type (str file-type))
         preamble (str "### " path "\n"
@@ -272,7 +272,7 @@ By default, reads up to " max-lines " lines, truncating lines longer than " max-
                       "*** `" path "`\n")]
     [(str preamble "```\n" content "\n```")]))
 
-(defmethod tool-system/format-results :unified-read-file [{:keys [max-lines]} result]
+(defmethod tool-system/format-results :unified-read-file [_tool result]
   (if (:error result)
     {:result [(or (:message result) "Unknown error")]
      :error true}
@@ -290,7 +290,7 @@ By default, reads up to " max-lines " lines, truncating lines longer than " max-
        :error false}
 
       :raw
-      {:result (format-raw-file result max-lines)
+      {:result (format-raw-file result)
        :error false}
       :file-response
       {:result [result]
@@ -308,7 +308,7 @@ By default, reads up to " max-lines " lines, truncating lines longer than " max-
 
 (comment
 
-  (let [path "/Users/bruce/workspace/llempty/clojure-mcp/src/clojure_mcp/tools/form_edit/tool.clj"
+  (let [#_#_path "/Users/bruce/workspace/llempty/clojure-mcp/src/clojure_mcp/tools/form_edit/tool.clj"
         path2 "NEXT_STEPS.md"
         user-dir (System/getProperty "user.dir")
         tool (unified-read-file-tool (atom {:clojure-mcp.core/nrepl-user-dir user-dir
