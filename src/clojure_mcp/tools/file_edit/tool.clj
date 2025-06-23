@@ -1,11 +1,10 @@
 (ns clojure-mcp.tools.file-edit.tool
   "Implementation of the file-edit tool using the tool-system multimethod approach."
   (:require
+   [clojure-mcp.config :as config]
    [clojure-mcp.tool-system :as tool-system]
-   [clojure-mcp.tools.file-edit.core :as core]
    [clojure-mcp.tools.file-edit.pipeline :as pipeline]
    [clojure-mcp.utils.valid-paths :as valid-paths]
-   [clojure-mcp.config :as config]
    [clojure.java.io :as io]))
 
 ;; Factory function to create the tool configuration
@@ -23,11 +22,11 @@
   "file_edit")
 
 (defmethod tool-system/tool-description :file-edit [_]
-  "Edit a file by replacing a specific text string with a new one. For safety, this tool requires that the string to replace appears exactly once in the file. 
+  "Edit a file by replacing a specific text string with a new one. For safety, this tool requires that the string to replace appears exactly once in the file.
 
-FIRST: the clojure_edit tool is prefered because they use precise structural rewrite-clj editing. They also incorporate linting and ensure balance parenthesis.
+FIRST: the clojure_edit tool is preferred because they use precise structural rewrite-clj editing. They also incorporate linting and ensure balance parenthesis.
 
-WHEN the clojure_edit tool won't work or you have a small easy edit 
+WHEN the clojure_edit tool won't work, or you have a small easy edit
 
 PREFER the file_write tool for replacing more than half a file, this saves on tokens
 
@@ -80,7 +79,7 @@ To make a file edit, provide the file_path, old_string (the text to replace), an
              :old_string old_string
              :new_string new_string))))
 
-(defmethod tool-system/execute-tool :file-edit [{:keys [nrepl-client-atom] :as tool} inputs]
+(defmethod tool-system/execute-tool :file-edit [tool inputs]
   (let [{:keys [file_path old_string new_string]} inputs
         result (pipeline/file-edit-pipeline file_path old_string new_string tool)]
     (pipeline/format-result result)))

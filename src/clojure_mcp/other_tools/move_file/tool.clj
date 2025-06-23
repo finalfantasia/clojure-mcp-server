@@ -1,8 +1,8 @@
 (ns clojure-mcp.other-tools.move-file.tool
   "Implementation of the move-file tool using the tool-system multimethod approach."
   (:require
-   [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.other-tools.move-file.core :as core]
+   [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.utils.valid-paths :as valid-paths]))
 
 ;; Factory function to create the tool configuration
@@ -50,7 +50,8 @@
     ;; Delegate to core implementation
     (core/move-file source destination)))
 
-(defmethod tool-system/format-results :move-file [_ {:keys [success error source destination type] :as result}]
+(defmethod tool-system/format-results :move-file
+  [_ {:keys [success error source destination type] :as _result}]
   (if success
     ;; Success case
     {:result [(str "Successfully moved " type " from " source " to " destination)]

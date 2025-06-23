@@ -1,8 +1,13 @@
 (ns clojure-mcp.other-tools.list-directory.tool-test
-  (:require [clojure.test :refer :all]
-            [clojure-mcp.other-tools.list-directory.tool :as sut]
-            [clojure-mcp.tool-system :as tool-system]
-            [clojure-mcp.config :as config])) ; Added config require
+  (:require
+   [clojure-mcp.config :as config]
+   [clojure-mcp.other-tools.list-directory.core :as list-directory-core]
+   [clojure-mcp.other-tools.list-directory.tool :as sut]
+   [clojure-mcp.tool-system :as tool-system]
+   [clojure-mcp.utils.valid-paths :as valid-paths]
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing]])
+  (:import (clojure.lang ExceptionInfo)))
 
 (deftest tool-name-test
   (testing "tool-name returns the correct name"
@@ -13,7 +18,7 @@
   (testing "tool-description returns a non-empty description"
     (let [description (tool-system/tool-description {:tool-type :list-directory})]
       (is (string? description))
-      (is (not (empty? description))))))
+      (is (not (str/blank? description))))))
 
 (deftest tool-schema-test
   (testing "tool-schema returns a valid schema with required path parameter"
@@ -31,7 +36,7 @@
       (let [tool-config {:tool-type :list-directory
                          :nrepl-client-atom nrepl-client-atom}]
 
-        (with-redefs [clojure-mcp.utils.valid-paths/validate-path-with-client
+        (with-redefs [valid-paths/validate-path-with-client
                       (fn [path _]
                         (str "/validated" path))]
 
@@ -40,13 +45,13 @@
               (is (= {:path "/validated/test/path"} result))))
 
           (testing "missing required path parameter"
-            (is (thrown-with-msg? clojure.lang.ExceptionInfo
+            (is (thrown-with-msg? ExceptionInfo
                                   #"Missing required parameter: path"
                                   (tool-system/validate-inputs tool-config {})))))))))
 
 (deftest execute-tool-test
   (testing "execute-tool calls core function with correct parameters"
-    (with-redefs [clojure-mcp.other-tools.list-directory.core/list-directory
+    (with-redefs [list-directory-core/list-directory
                   (fn [path]
                     {:called-with {:path path}})]
 

@@ -3,15 +3,15 @@
    This namespace contains the pure functionality for manipulating Clojure forms
    without any MCP-specific code."
   (:require
-   [rewrite-clj.zip :as z]
-   [rewrite-clj.parser :as p]
-   [rewrite-clj.node :as n]
-   [rewrite-clj.paredit :as par]
-   [cljfmt.core :as fmt]
    [cljfmt.config :as cljfmt-config]
+   [cljfmt.core :as fmt]
    [clojure-mcp.config :as config]
    [clojure.string :as str]
-   [clojure.java.io :as io]))
+   [rewrite-clj.node :as n]
+   [rewrite-clj.paredit :as par]
+   [rewrite-clj.parser :as p]
+   [rewrite-clj.zip :as z])
+  (:import (java.io FileNotFoundException IOException)))
 
 ;; Form identification and location functions
 
@@ -67,21 +67,21 @@
 (defn is-top-level-form?
   "Check if a form matches the given tag and name pattern.
    Handles metadata and complex dispatch values.
-   
-   This function uses direct zipper navigation and string comparison rather than 
-   sexpr conversion, enabling it to properly handle namespaced keywords (::keyword) 
+
+   This function uses direct zipper navigation and string comparison rather than
+   sexpr conversion, enabling it to properly handle namespaced keywords (::keyword)
    and complex dispatch values (vectors, maps, qualified symbols/keywords).
-   
+
    For defmethod forms, the name can be either:
    - Just the method name (e.g., 'area') - will match ANY defmethod with that name
-   - A compound name with dispatch value (e.g., 'area :rectangle' or 'tool-system/validate-inputs ::tool') 
+   - A compound name with dispatch value (e.g., 'area :rectangle' or 'tool-system/validate-inputs ::tool')
      - will match only that specific implementation
-   
+
    Arguments:
    - zloc: The zipper location to check
    - tag: The definition tag (e.g., 'defn', 'def', 'defmethod')
    - dname: The name of the definition, which can include dispatch value for defmethod
-   
+
    Returns true if the form matches the pattern."
   [zloc tag dname]
   (try
@@ -98,14 +98,14 @@
 
 (defn find-top-level-form
   "Find a top-level form with a specific tag and name in a zipper.
-   
+
    Arguments:
    - zloc: The zipper location to start searching from
    - tag: The tag name as a string (e.g., \"defn\", \"def\", \"ns\")
    - dname: The name of the definition as a string
    - max-depth: Optional maximum depth to search (defaults to 0 for backward compatibility)
                 0 = only immediate siblings, 1 = one level deeper, etc.
-   
+
    Returns a map with:
    - :zloc - the zipper location of the matched form, or nil if not found
    - :similar-matches - a vector of maps with {:form-name, :qualified-name, :tag} for potential namespace-qualified matches"
@@ -167,7 +167,7 @@
 
 (defn edit-top-level-form
   "Edit a top-level form by replacing it or inserting content before or after.
-   
+
    Arguments:
    - zloc: The zipper location to start searching from
    - tag: The form type (e.g., 'defn, 'def, 'ns)
@@ -175,7 +175,7 @@
    - content-str: The string to insert or replace with (can contain multiple forms)
    - edit-type: Keyword indicating the edit type (:replace, :before, or :after)
    - max-depth: Optional maximum depth to search (defaults to 0 for backward compatibility)
-   
+
    Returns a map with:
    - :zloc - the updated zipper (or nil if form not found)
    - :similar-matches - a vector of potential namespace-qualified matches"
@@ -206,12 +206,12 @@
 
 (defn row-col->offset
   "Convert row and column coordinates to a character offset in a string.
-   
+
    Arguments:
    - s: The source string
    - target-row: The target row (1-based)
    - target-col: The target column (1-based)
-   
+
    Returns the character offset in the string."
   [s target-row target-col]
   (loop [lines (str/split-lines s)
@@ -225,11 +225,11 @@
 
 (defn zloc-offsets
   "Calculate character offsets for a zipper location's start and end positions.
-   
+
    Arguments:
    - source-str: The source code string
    - positions: A vector of [row col] pairs
-   
+
    Returns a vector of character offsets."
   [source-str positions]
   (mapv (fn [[row col]] (row-col->offset source-str row col))
@@ -239,12 +239,12 @@
 
 (defn find-docstring
   "Finds the docstring node of a top-level form.
-   
+
    Arguments:
    - zloc: The zipper location to start searching from
    - tag: The form type (e.g., 'defn, 'def)
    - name: The name of the form
-   
+
    Returns a map with:
    - :zloc - the zipper positioned at the docstring node (or nil if not found)
    - :similar-matches - a vector of potential namespace-qualified matches from find-top-level-form"
@@ -266,13 +266,13 @@
 
 (defn edit-docstring
   "Edit a docstring in a top-level form.
-   
+
    Arguments:
    - zloc: The zipper location to start searching from
    - tag: The form type (e.g., 'defn, 'def)
    - name: The name of the form
    - new-docstring: The new docstring content
-   
+
    Returns a map with:
    - :zloc - the updated zipper (or nil if form/docstring not found)
    - :similar-matches - a vector of potential namespace-qualified matches"
@@ -290,10 +290,10 @@
 
 (defn is-comment-form?
   "Check if a zloc is a (comment ...) form.
-   
+
    Arguments:
    - zloc: The zipper location to check
-   
+
    Returns true if the form is a comment form."
   [zloc]
   (try
@@ -305,10 +305,10 @@
 
 (defn is-line-comment?
   "Check if a zloc is a line comment.
-   
+
    Arguments:
    - zloc: The zipper location to check
-   
+
    Returns true if the node is a line comment."
   [zloc]
   (try
@@ -318,13 +318,13 @@
 (defn find-comment-block
   "Find a comment block (either a 'comment' form or consecutive comment lines)
    that contains a specific substring.
-   
+
    This version properly handles comment blocks at the end of the file.
-   
+
    Arguments:
    - source: The source string to search in
    - comment-substring: The substring to look for
-   
+
    Returns a map with :type, :start, :end, and :content keys,
    or nil if no matching comment block is found."
   [source comment-substring]
@@ -399,12 +399,12 @@
 
 (defn edit-comment-block
   "Edit a comment block in the source code.
-   
+
    Arguments:
    - source: The source string
    - comment-substring: Substring to identify the comment block
    - new-content: New content to replace the comment block with
-   
+
    Returns the updated source code string, or the original if no matching block was found."
   [source comment-substring new-content]
   (let [block (find-comment-block source comment-substring)]
@@ -436,10 +436,10 @@
 
 (defn get-form-summary
   "Get a summarized representation of a Clojure form showing only up to the argument list.
-   
+
    Arguments:
    - zloc: The zipper location of the form
-   
+
    Returns a string representation of the form summary, or nil if not a valid form."
   [zloc]
   (try
@@ -498,7 +498,7 @@
             "deftest" (str "(deftest " form-name " ...)")
             "ns" (z/string zloc) ; Always show the full namespace
             (str "(" form-type " " (or form-name "") " ...)")))))
-    (catch Exception e
+    (catch Exception _e
       ;; Provide a fallback in case of errors
       (try
         (let [raw-str (z/string zloc)]
@@ -511,10 +511,10 @@
 (defn valid-form-to-include?
   "Check if a form should be included in the collapsed view.
    Excludes forms like comments, unevals, whitespace, etc.
-   
+
    Arguments:
    - zloc: The zipper location to check
-   
+
    Returns:
    - true if the form should be included, false otherwise"
   [zloc]
@@ -535,14 +535,14 @@
       ;; If we can't determine the type, skip it to be safe
       false)))
 
-;; TODO form name can be a keyword if its a spec 
+;; TODO form name can be a keyword if its a spec
 (defn extract-form-name
   "Extract the name of a form from its sexpr representation.
    For example, from (defn foo [x] ...) it extracts 'foo'.
-   
+
    Arguments:
    - sexpr: The S-expression to extract the name from
-   
+
    Returns:
    - The name as a string, or nil if no name could be extracted"
   [sexpr]
@@ -581,11 +581,11 @@
 (defn format-source-string
   "Formats a source code string using cljfmt. Use the project-formatting-options
    function to get comprehensive formatting options for the current project.
-   
+
    Arguments:
    - source-str: The source code string to format
    - formatting-options: Options for cljfmt
-   
+
    Returns:
    - The formatted source code string"
   [source-str formatting-options]
@@ -595,30 +595,30 @@
 
 (defn load-file-content
   "Loads content from a file.
-   
+
    Arguments:
    - file-path: Path to the file
-   
+
    Returns:
    - The file content as a string, or an error map if the file could not be read"
   [file-path]
   (try
     {:content (slurp file-path)
      :error false}
-    (catch java.io.FileNotFoundException _
+    (catch FileNotFoundException _
       {:error true
        :message (str "File not found: " file-path)})
-    (catch java.io.IOException e
+    (catch IOException e
       {:error true
        :message (str "IO error while reading file: " (.getMessage e))})))
 
 (defn save-file-content
   "Saves content to a file.
-   
+
    Arguments:
    - file-path: Path to the file
    - content: The content to save
-   
+
    Returns:
    - A map with :success true if the file was saved, or :success false and :message if an error occurred"
   [file-path content]
@@ -632,10 +632,10 @@
 (defn extract-dispatch-from-defmethod
   "Extracts the method name and dispatch value from defmethod source code.
    Returns [method-name dispatch-value-str] or nil if parsing fails.
-   
+
    Arguments:
    - source-code: The defmethod source code as a string
-   
+
    Returns:
    - A vector of [method-name dispatch-value-str] or nil if parsing fails"
   [source-code]
@@ -709,10 +709,10 @@
    By default, including comments and #_ forms. Preserves accuracy by
    including non-semantic nodes in sequence. Set clean? to true if you want to ignore
    comments in the match.
-   
+
    Options:
-   - :clean? (default false) 
-   
+   - :clean? (default false)
+
    Example:
    (zchild-match-exprs (z/of-string* \";; TODO\\n(defn foo [x] x)\"))
    => (\";; TODO\\n\" \"(defn foo [x] x)\")"
@@ -805,7 +805,7 @@
         {:edit-span-loc (-> after-insert z/left)
          :after-loc after-loc}))))
 
-(defn insert-before-multi [zloc match-sexprs replacement-node]
+(defn insert-before-multi [zloc _match-sexprs replacement-node]
   (let [edit-loc (-> (z/insert-left zloc replacement-node)
                      z/left)]
     {:edit-span-loc edit-loc

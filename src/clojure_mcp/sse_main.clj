@@ -1,6 +1,6 @@
 (ns clojure-mcp.sse-main
   "Example of a custom MCP server using Server-Sent Events (SSE) transport.
-   
+
    This demonstrates reusing the standard tools, prompts, and resources
    from main.clj while using a different transport mechanism (SSE instead
    of stdio). The SSE transport allows web-based clients to connect."
@@ -14,4 +14,3 @@
    {:make-tools-fn main/make-tools
     :make-prompts-fn main/make-prompts
     :make-resources-fn main/make-resources}))
-

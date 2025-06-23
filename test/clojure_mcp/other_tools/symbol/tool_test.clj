@@ -1,12 +1,12 @@
 (ns clojure-mcp.other-tools.symbol.tool-test
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures]]
-   [clojure-mcp.other-tools.symbol.tool :as sut]
+   [clojure-mcp.nrepl]
    [clojure-mcp.other-tools.symbol.core :as core]
+   [clojure-mcp.other-tools.symbol.tool :as sut]
    [clojure-mcp.tool-system :as tool-system]
-   [clojure-mcp.nrepl :as nrepl]
-   [nrepl.server :as nrepl-server]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing use-fixtures]]
+   [nrepl.server]))
 
 ;; Use the common test utils for nREPL server setup
 (defonce ^:dynamic *nrepl-server* nil)
@@ -92,7 +92,7 @@
                        :source-code :symbol-search]]
       (let [description (tool-system/tool-description {:tool-type tool-type})]
         (is (string? description))
-        (is (not (empty? description)))))))
+        (is (not (str/blank? description)))))))
 
 (deftest tool-schema-test
   (testing "symbol-completions schema is correct"
@@ -220,7 +220,7 @@
 
 (deftest registration-map-test
   (testing "backward compatibility functions return valid registration maps"
-    (doseq [[name-str tool-fn]
+    (doseq [[_name-str tool-fn]
             [["symbol-completions" sut/symbol-completions-tool]
              ["symbol-metadata" sut/symbol-metadata-tool]
              ["symbol-documentation" sut/symbol-documentation-tool]

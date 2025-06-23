@@ -3,10 +3,10 @@
    
    Supports different Clojure-like environments by providing expressions
    and initialization sequences specific to each dialect."
-  (:require [clojure.edn :as edn]
+  (:require [clojure-mcp.nrepl :as nrepl]
+            [clojure.edn :as edn]
             [clojure.java.io :as io]
-            [clojure.tools.logging :as log]
-            [clojure-mcp.nrepl :as nrepl]))
+            [clojure.tools.logging :as log]))
 
 (defn handle-bash-over-nrepl? [nrepl-env-type]
   (boolean (#{:clj :bb} nrepl-env-type)))

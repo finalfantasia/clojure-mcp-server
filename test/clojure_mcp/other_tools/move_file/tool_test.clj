@@ -1,10 +1,9 @@
 (ns clojure-mcp.other-tools.move-file.tool-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure-mcp.config :as config]
             [clojure-mcp.other-tools.move-file.tool :as tool]
             [clojure-mcp.tool-system :as tool-system]
-            [clojure-mcp.config :as config] ; Added config require
-            [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is testing]]))
 
 ;; Create a mock nREPL client atom for testing
 (def mock-client-atom (atom {}))
@@ -23,7 +22,7 @@
     (let [tool-config (tool/create-move-file-tool mock-client-atom)
           description (tool-system/tool-description tool-config)]
       (is (string? description))
-      (is (not (empty? description))))))
+      (is (not (str/blank? description))))))
 
 ;; Test the tool-schema multimethod
 (deftest tool-schema-test
