@@ -1,17 +1,16 @@
 (ns clojure-mcp.tools.glob-files.tool
   "Implementation of the glob-files tool using the tool-system multimethod approach."
   (:require
+   [clojure-mcp.config :as config]
    [clojure-mcp.tool-system :as tool-system]
    [clojure-mcp.tools.glob-files.core :as core]
    [clojure-mcp.utils.valid-paths :as valid-paths]
-   [clojure-mcp.config :as config] ; Added config require
-   [clojure.data.json :as json]
    [clojure.string :as string]))
 
 ;; Factory function to create the tool configuration
 (defn create-glob-files-tool
   "Creates the glob-files tool configuration.
-   
+
    Parameters:
    - nrepl-client-atom: Atom containing the nREPL client"
   [nrepl-client-atom]
@@ -27,7 +26,7 @@
  - Supports glob patterns like \"**/*.clj\" or \"src/**/*.cljs\".
  - Returns matching file paths sorted by modification time (most recent first).
  - Use this tool when you need to find files by name patterns.
- - When you are doing an open ended search that may require multiple rounds of globbing and grepping, use the `dispatch_agent` tool instead")
+ - When you are doing an open-ended search that may require multiple rounds of globbing and grepping, use the `dispatch_agent` tool instead")
 
 (defmethod tool-system/tool-schema :glob-files [_]
   {:type :object
@@ -80,7 +79,7 @@
 ;; Backward compatibility function that returns the registration map
 (defn glob-files-tool
   "Returns the registration map for the glob-files tool.
-   
+
    Parameters:
    - nrepl-client-atom: Atom containing the nREPL client"
   [nrepl-client-atom]

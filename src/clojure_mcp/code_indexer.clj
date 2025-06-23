@@ -10,8 +10,8 @@
    The collapsed views use the pattern-core functionality to show only
    function signatures by default, making large codebases navigable."
   (:require
-   [clojure-mcp.tools.unified-read-file.pattern-core :as pattern]
    [clojure-mcp.tools.glob-files.core :as glob]
+   [clojure-mcp.tools.unified-read-file.pattern-core :as pattern]
    [clojure.java.io :as io]
    [clojure.string :as str]))
 

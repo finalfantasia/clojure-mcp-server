@@ -1,12 +1,12 @@
 (ns clojure-mcp.tools.form-edit.core-test
   (:require
-   [clojure-mcp.tools.test-utils :as test-utils]
    [clojure-mcp.config :as config]
-   [clojure.test :refer [deftest testing is use-fixtures]]
    [clojure-mcp.tools.form-edit.core :as sut]
-   [rewrite-clj.zip :as z]
+   [clojure-mcp.tools.test-utils :as test-utils]
    [clojure.java.io :as io]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing use-fixtures]]
+   [rewrite-clj.zip :as z]))
 
 ;; Test fixtures
 (def ^:dynamic *test-dir* nil)
@@ -397,12 +397,11 @@
 (defn test [])"
           zloc (z/of-string* source)
           result (sut/remove-consecutive-comments zloc)
-          result-str (z/root-string result)]
+          defn-zloc (z/down result)]
       ;; Should end up at the defn
       ;; After removing comments, we're at root
-      (let [defn-zloc (z/down result)]
-        (is (= :list (z/tag defn-zloc)))
-        (is (str/includes? (z/string defn-zloc) "defn test"))))))
+      (is (= :list (z/tag defn-zloc)))
+      (is (str/includes? (z/string defn-zloc) "defn test")))))
 
 (deftest row-col-offset-test
   (testing "row-col->offset correctly calculates character offsets"
@@ -450,8 +449,7 @@
 
   (testing "is-line-comment? correctly identifies line comments"
     (let [source "(ns test.core)\n\n;; This is a comment\n(defn example-fn [x y]\n  (+ x y))"
-          zloc (get-zloc source)
-          comment-loc (z/right zloc)] ;; Try to move to comment
+          zloc (get-zloc source)]
       ;; Note: This test might be fragile as rewrite-clj might handle comments differently
       (is (not (sut/is-line-comment? zloc))))))
 

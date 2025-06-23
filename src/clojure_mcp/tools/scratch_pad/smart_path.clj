@@ -43,7 +43,7 @@
       ;; Valid string index for vector
       (and (vector? current-data) parsed-int) [parsed-int true]
 
-      ;; String that could be index but data isn't vector
+      ;; String that could be an index but data isn't vector
       :else [k false])))
 
 (defn initializing-vector-at-zero?

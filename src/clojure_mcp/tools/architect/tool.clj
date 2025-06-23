@@ -66,9 +66,10 @@
 (defmethod tool-system/validate-inputs :architect [_ inputs]
   (core/validate-architect-inputs inputs))
 
-(defmethod tool-system/execute-tool :architect [{:keys [nrepl-client-atom model] :as tool} inputs]
+(defmethod tool-system/execute-tool :architect [tool inputs]
   (core/architect tool inputs))
 
-(defmethod tool-system/format-results :architect [_ {:keys [result error] :as results}]
+(defmethod tool-system/format-results :architect
+  [_ {:keys [result error] :as _results}]
   {:result [result]
    :error error})

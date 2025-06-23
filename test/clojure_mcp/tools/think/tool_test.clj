@@ -1,7 +1,10 @@
 (ns clojure-mcp.tools.think.tool-test
-  (:require [clojure.test :refer :all]
-            [clojure-mcp.tool-system :as tool-system]
-            [clojure-mcp.tools.think.tool :as sut]))
+  (:require [clojure-mcp.tool-system :as tool-system]
+            ;; Required for multimethods
+            [clojure-mcp.tools.think.tool]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is testing]])
+  (:import (clojure.lang ExceptionInfo)))
 
 (deftest think-tool-multimethods
   (let [tool-config {:tool-type :think}]
@@ -11,7 +14,7 @@
     (testing "tool-description returns a non-empty string"
       (let [description (tool-system/tool-description tool-config)]
         (is (string? description))
-        (is (not (empty? description)))))
+        (is (not (str/blank? description)))))
 
     (testing "tool-schema returns a valid schema"
       (let [schema (tool-system/tool-schema tool-config)]
@@ -23,7 +26,7 @@
     (testing "validate-inputs validates correctly"
       (is (= {:thought "Some thought"}
              (tool-system/validate-inputs tool-config {:thought "Some thought"})))
-      (is (thrown? clojure.lang.ExceptionInfo
+      (is (thrown? ExceptionInfo
                    (tool-system/validate-inputs tool-config {}))))
 
     (testing "execute-tool returns expected result"

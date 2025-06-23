@@ -1,73 +1,67 @@
 (ns clojure-mcp.core
-  (:require [clojure.data.json :as json]
-            [clojure.edn :as edn]
-            [clojure.java.io :as io]
-            [clojure.spec.alpha :as s]
-            [clojure.string :as str]
-            [clojure.tools.logging :as log]
-            [clojure-mcp.nrepl :as nrepl]
-            [clojure-mcp.config :as config]
-            [clojure-mcp.dialects :as dialects]
-            [clojure-mcp.file-content :as file-content])
-  (:import [io.modelcontextprotocol.server.transport
-            StdioServerTransportProvider]
-           [io.modelcontextprotocol.server McpServer McpServerFeatures
-            McpServerFeatures$AsyncToolSpecification
-            McpServerFeatures$AsyncResourceSpecification]
-           [io.modelcontextprotocol.spec
-            McpSchema$ServerCapabilities
-            McpSchema$Tool
-            McpSchema$CallToolResult
-            McpSchema$TextContent
-            McpSchema$ImageContent
-            McpSchema$Prompt
-            McpSchema$PromptArgument
-            McpSchema$GetPromptRequest
-            McpSchema$GetPromptResult
-            McpSchema$PromptMessage
-            McpSchema$Role
-            McpSchema$LoggingLevel
-            McpSchema$Resource
-            McpSchema$ReadResourceResult
-            McpSchema$TextResourceContents
-            McpSchema$ResourceContents]
-           [io.modelcontextprotocol.server McpServer McpServerFeatures
-            McpServerFeatures$AsyncToolSpecification
-            McpServerFeatures$AsyncPromptSpecification]
-           [reactor.core.publisher Mono]
-           [com.fasterxml.jackson.databind ObjectMapper]))
+  (:require
+   [clojure-mcp.config :as config]
+   [clojure-mcp.dialects :as dialects]
+   [clojure-mcp.file-content :as file-content]
+   [clojure-mcp.nrepl :as nrepl]
+   [clojure.data.json :as json]
+   [clojure.java.io :as io]
+   [clojure.spec.alpha :as s]
+   [clojure.tools.logging :as log])
+  (:import
+   (com.fasterxml.jackson.databind ObjectMapper)
+   (io.modelcontextprotocol.server
+    McpServer
+    McpServerFeatures$AsyncPromptSpecification
+    McpServerFeatures$AsyncResourceSpecification
+    McpServerFeatures$AsyncToolSpecification)
+   (io.modelcontextprotocol.server.transport
+    StdioServerTransportProvider)
+   (io.modelcontextprotocol.spec
+    McpSchema$CallToolResult
+    McpSchema$GetPromptRequest
+    McpSchema$GetPromptResult
+    McpSchema$Prompt
+    McpSchema$PromptArgument
+    McpSchema$PromptMessage
+    McpSchema$ReadResourceResult
+    McpSchema$Resource
+    McpSchema$Role
+    McpSchema$ServerCapabilities
+    McpSchema$TextContent
+    McpSchema$TextResourceContents
+    McpSchema$Tool)
+   (java.util List)
+   (reactor.core.publisher Mono)))
 
 (defn create-mono-from-callback
   "Creates a function that takes the exchange and the arguments map and
   returns a Mono promise The callback function should take three
-  arguments: 
-   - exchange: The MCP exchange object 
-   - arguments: The arguments map sent in the request 
-   - continuation: A function that will be called with the result and will fullfill the promise"
+  arguments:
+   - exchange: The MCP exchange object
+   - arguments: The arguments map sent in the request
+   - continuation: A function that will be called with the result and will fulfill the promise"
   [callback-fn]
   (fn [exchange arguments]
     (Mono/create
-     (reify java.util.function.Consumer
-       (accept [this sink]
-         (callback-fn
-          exchange
-          arguments
-          (fn [result]
-            (.success sink result))))))))
+     (fn [sink]
+       (callback-fn exchange arguments (fn [result] (.success sink result)))))))
 
 (defn- adapt-result [result]
   (cond
     (string? result) (McpSchema$TextContent. result)
     (file-content/file-response? result)
     (file-content/file-response->file-content result)
-    :else (McpSchema$TextContent. " ")))
+    :else (McpSchema$TextContent/new " ")))
 
-(defn ^McpSchema$CallToolResult adapt-results [list-str error?]
-  (McpSchema$CallToolResult. (vec (keep adapt-result list-str)) error?))
+(defn adapt-results
+  [list-str error?]
+  (^[List Boolean] McpSchema$CallToolResult/new
+   (keep adapt-result list-str) error?))
 
 (defn create-async-tool
   "Creates an AsyncToolSpecification with the given parameters.
-   
+
    Takes a map with the following keys:
     :name         - The name of the tool
     :description  - A description of what the tool does
@@ -87,32 +81,31 @@
                          (fn [res-list error?]
                            (mono-fill-k (adapt-results res-list error?)))]
                      (tool-fn exchange arg-map clj-result-k))))]
-    (McpServerFeatures$AsyncToolSpecification.
-     (McpSchema$Tool. name description schema-json)
-     (reify java.util.function.BiFunction
-       (apply [this exchange arguments]
-         (log/debug (str "Args from MCP: " (pr-str arguments)))
-         (mono-fn exchange arguments))))))
+    (McpServerFeatures$AsyncToolSpecification/new
+     (^[String String String] McpSchema$Tool/new name description schema-json)
+     (fn [exchange arguments]
+       (log/debug (str "Args from MCP: " (pr-str arguments)))
+       (mono-fn exchange arguments)))))
 
-(defn ^McpSchema$GetPromptResult adapt-prompt-result
+(defn adapt-prompt-result
   "Adapts a Clojure prompt result map into an McpSchema$GetPromptResult.
    Expects a map like {:description \"...\" :messages [{:role :user :content \"...\"}]}"
   [{:keys [description messages]}]
   (let [mcp-messages (mapv (fn [{:keys [role content]}]
-                             (McpSchema$PromptMessage.
+                             (McpSchema$PromptMessage/new
                               (case role ;; Convert keyword role to McpSchema$Role enum
                                 ;; :system McpSchema$Role/SYSTEM
                                 :user McpSchema$Role/USER
-                                :assistant McpSchema$Role/ASSISTANT
-                                ;; Add other roles if needed
-                                )
-                              (McpSchema$TextContent. content))) ;; Assuming TextContent for now
+                                :assistant McpSchema$Role/ASSISTANT)
+                              ;; Add other roles if needed
+
+                              (McpSchema$TextContent/new content))) ;; Assuming TextContent for now
                            messages)]
-    (McpSchema$GetPromptResult. description mcp-messages)))
+    (McpSchema$GetPromptResult/new description mcp-messages)))
 
 (defn create-async-prompt
   "Creates an AsyncPromptSpecification with the given parameters.
-   
+
    Takes a map with the following keys:
     :name        - The name (ID) of the prompt
     :description - A description of the prompt
@@ -126,9 +119,9 @@
                                       {:description \"...\" :messages [{:role :user :content \"...\"}]} "
   [{:keys [name description arguments prompt-fn]}]
   (let [mcp-args (mapv (fn [{:keys [name description required?]}]
-                         (McpSchema$PromptArgument. name description required?))
+                         (McpSchema$PromptArgument/new name description required?))
                        arguments)
-        mcp-prompt (McpSchema$Prompt. name description mcp-args)
+        mcp-prompt (McpSchema$Prompt/new name description mcp-args)
         mono-fn (create-mono-from-callback ;; Reuse the existing helper
                  (fn [_ request mono-fill-k]
                    ;; The request object has an .arguments() method
@@ -136,11 +129,10 @@
                      (prompt-fn _ request-args
                                 (fn [clj-result-map]
                                   (mono-fill-k (adapt-prompt-result clj-result-map)))))))]
-    (McpServerFeatures$AsyncPromptSpecification.
+    (McpServerFeatures$AsyncPromptSpecification/new
      mcp-prompt
-     (reify java.util.function.BiFunction
-       (apply [this exchange request]
-         (mono-fn exchange request))))))
+     (fn [exchange request]
+       (mono-fn exchange request)))))
 
 (defn add-tool
   "Helper function to create an async tool from a map and add it to the server."
@@ -152,7 +144,7 @@
 
 (defn create-async-resource
   "Creates an AsyncResourceSpecification with the given parameters.
-   
+
    Takes a map with the following keys:
     :url          - The URL of the resource
     :name         - The name of the resource
@@ -164,7 +156,7 @@
                       * request      - The request object
                       * clj-result-k - continuation fn taking a vector of strings"
   [{:keys [url name description mime-type resource-fn]}]
-  (let [resource (McpSchema$Resource. url name description mime-type nil)
+  (let [resource (McpSchema$Resource/new url name description mime-type nil)
         mono-fn (create-mono-from-callback
                  (fn [exchange request mono-fill-k]
                    (resource-fn
@@ -172,19 +164,18 @@
                     request
                     (fn [result-strings]
                       ;; Create TextResourceContents objects with the URL and MIME type
-                      (let [resource-contents (mapv #(McpSchema$TextResourceContents. url mime-type %)
+                      (let [resource-contents (mapv #(McpSchema$TextResourceContents/new url mime-type %)
                                                     result-strings)]
                         ;; Create ReadResourceResult with the list of TextResourceContents
-                        (mono-fill-k (McpSchema$ReadResourceResult. resource-contents)))))))]
-    (McpServerFeatures$AsyncResourceSpecification.
+                        (mono-fill-k (McpSchema$ReadResourceResult/new resource-contents)))))))]
+    (McpServerFeatures$AsyncResourceSpecification/new
      resource
-     (reify java.util.function.BiFunction
-       (apply [this exchange request]
-         (mono-fn exchange request))))))
+     (fn [exchange request]
+       (mono-fn exchange request)))))
 
 (defn add-resource
   "Helper function to create an async resource from a map and add it to the server.
-   
+
    Takes an MCP server and a resource map with:
     :url          - The URL of the resource
     :name         - The name of the resource
@@ -198,7 +189,7 @@
 
 (defn add-prompt
   "Helper function to create an async prompt from a map and add it to the server.
-   
+
    Takes an MCP server and a prompt map with:
     :name        - The name (ID) of the prompt
     :description - A description of the prompt
@@ -216,7 +207,7 @@
   []
   (log/info "Starting MCP server")
   (try
-    (let [transport-provider (StdioServerTransportProvider. (ObjectMapper.))
+    (let [transport-provider (StdioServerTransportProvider/new (ObjectMapper/new))
           server (-> (McpServer/async transport-provider)
                      (.serverInfo "clojure-server" "0.1.0")
                      (.capabilities (-> (McpSchema$ServerCapabilities/builder)
@@ -251,14 +242,14 @@
 
 (defn create-and-start-nrepl-connection
   "Convenience higher-level API function to create and initialize an nREPL connection.
-   
+
    This function handles the complete setup process including:
    - Creating the nREPL client connection
    - Starting the polling mechanism
    - Loading required namespaces and helpers (if Clojure environment)
    - Setting up the working directory
    - Loading configuration
-   
+
    Takes initial-config map with :port and optional :host, :project-dir, :nrepl-env-type, :config-file.
    Returns the configured nrepl-client-map with ::config/config attached."
   [{:keys [project-dir config-file] :as initial-config}]
@@ -297,7 +288,7 @@
      (let [nrepl-client-map (nrepl/create initial-config)]
        (nrepl/start-polling nrepl-client-map)
        ;; copy config
-       ;; maybe we should create this just like the normal nrelp connection?
+       ;; maybe we should create this just like the normal nREPL connection?
        ;; we should introspect the project and get a working directory
        ;; and maybe add it to allowed directories for both
        (when initialize-fn (initialize-fn nrepl-client-map))
@@ -310,7 +301,7 @@
 
 (defn close-servers
   "Convenience higher-level API function to gracefully shut down MCP and nREPL servers.
-   
+
    This function handles the complete shutdown process including:
    - Stopping nREPL polling if a client exists in nrepl-client-atom
    - Gracefully closing the MCP server
@@ -368,31 +359,31 @@
 
 (defn build-and-start-mcp-server
   "Builds and starts an MCP server with the provided configuration.
-   
+
    This is the main entry point for creating custom MCP servers. It handles:
    - Validating input options
    - Creating and starting the nREPL connection
    - Setting up the working directory
    - Calling factory functions to create tools, prompts, and resources
    - Registering everything with the MCP server
-   
+
    Args:
    - nrepl-args: Map with connection settings
      - :port (required) - nREPL server port
      - :host (optional) - nREPL server host (defaults to localhost)
-     - :project-dir (optional) - Root directory for the project (must exist)
-   
+- :project-dir (optional) - Root directory for the project (must exist)
+
    - config: Map with factory functions
      - :make-tools-fn - (fn [nrepl-client-atom working-dir] ...) returns seq of tools
-     - :make-prompts-fn - (fn [nrepl-client-atom working-dir] ...) returns seq of prompts  
+     - :make-prompts-fn - (fn [nrepl-client-atom working-dir] ...) returns seq of prompts
      - :make-resources-fn - (fn [nrepl-client-atom working-dir] ...) returns seq of resources
-   
+
    All factory functions are optional. If not provided, that category won't be populated.
-   
+
    Side effects:
    - Stores the nREPL client in core/nrepl-client-atom
    - Starts the MCP server on stdio
-   
+
    Returns: nil"
   [nrepl-args {:keys [make-tools-fn
                       make-prompts-fn
